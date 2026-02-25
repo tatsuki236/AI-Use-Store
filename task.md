@@ -1,0 +1,27 @@
+# Tasks
+
+- [x] Project Initialization
+    - [x] Initialize Next.js app with Tailwind and TypeScript
+    - [x] Install shadcn/ui and basic components
+    - [x] Set up Supabase client and environment variables
+- [x] Database Setup
+    - [x] Create SQL migration for `profiles`, `courses`, `lessons`, and `purchases` tables
+    - [x] Configure RLS policies for each table
+- [x] Phase 1: Admin Dashboard
+    - [x] Implement admin check middleware or logic
+    - [x] Create `/admin` dashboard layout
+    - [x] List pending purchases
+    - [x] Implement approval logic (update purchase status and profile is_approved)
+- [x] Phase 2: Content Protection (RLS)
+    - [x] Refine RLS for `lessons` based on `purchases` status
+    - [x] Created `get_course_lessons` RPC for public lesson title access
+    - [x] Verify content protection via API/Client
+- [x] Phase 3: Course & Lesson UI
+    - [x] Create Homepage (`/`) with course cards (Udemy style)
+    - [x] Create Course Details page (`/courses/[id]`)
+    - [x] Create Lesson page (`/lessons/[id]`) with Markdown and Video (note style)
+- [x] Final Polish & Verification
+    - [x] Responsive design (Tailwind responsive classes throughout)
+    - [x] SEO optimization (dynamic metadata, OG tags, template titles)
+    - [x] 404 Not Found page
+    - [x] Admin course/lesson CRUD management pages
