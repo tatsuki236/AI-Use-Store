@@ -55,11 +55,48 @@ export default async function WithdrawPage() {
     redirect("/seller/register");
   }
 
+  // Calculate gross sales from completed purchases of seller's articles
+  const { data: myArticles } = await supabase
+    .from("articles")
+    .select("id, price")
+    .eq("user_id", user.id);
+
+  let grossSales = 0;
+  if (myArticles && myArticles.length > 0) {
+    const articleIds = myArticles.map((a) => a.id);
+    const { data: purchases } = await supabase
+      .from("purchases")
+      .select("article_id")
+      .in("article_id", articleIds)
+      .eq("status", "completed");
+
+    if (purchases) {
+      const priceMap = new Map(myArticles.map((a) => [a.id, a.price ?? 0]));
+      grossSales = purchases.reduce(
+        (sum, p) => sum + (priceMap.get(p.article_id) ?? 0),
+        0
+      );
+    }
+  }
+
+  const netBalance = Math.floor(grossSales * 0.80);
+
+  // Fetch withdrawals
   const { data: withdrawals } = await supabase
     .from("withdrawal_requests")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  const completedWithdrawals = (withdrawals ?? [])
+    .filter((w) => w.status === "completed")
+    .reduce((sum, w) => sum + w.amount, 0);
+
+  const pendingWithdrawals = (withdrawals ?? [])
+    .filter((w) => w.status === "pending" || w.status === "approved")
+    .reduce((sum, w) => sum + w.amount, 0);
+
+  const availableBalance = Math.max(0, netBalance - completedWithdrawals - pendingWithdrawals);
 
   const hasPending = withdrawals?.some((w) => w.status === "pending");
 
@@ -90,6 +127,42 @@ export default async function WithdrawPage() {
           <h1 className="text-xl sm:text-2xl font-bold">出金申請</h1>
         </div>
 
+        {/* Available Balance Card */}
+        <div className="bg-card border rounded-xl p-4 sm:p-6 mb-6">
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div>
+              <p className="text-[11px] text-muted-foreground mb-0.5">総売上</p>
+              <p className="text-lg font-bold">¥{grossSales.toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-muted-foreground mb-0.5">手数料 (20%)</p>
+              <p className="text-lg font-bold text-muted-foreground">
+                -¥{Math.floor(grossSales * 0.20).toLocaleString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] text-muted-foreground mb-0.5">差引後 (80%)</p>
+              <p className="text-lg font-bold">¥{netBalance.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="border-t mt-3 pt-3 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">出金可能残高</p>
+              <p className="text-2xl font-bold text-emerald-600">
+                ¥{availableBalance.toLocaleString()}
+              </p>
+            </div>
+            <div className="text-right text-xs text-muted-foreground space-y-0.5">
+              {completedWithdrawals > 0 && (
+                <p>出金済み: ¥{completedWithdrawals.toLocaleString()}</p>
+              )}
+              {pendingWithdrawals > 0 && (
+                <p>申請中: ¥{pendingWithdrawals.toLocaleString()}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* New withdrawal form */}
         {hasPending ? (
           <div className="bg-card border rounded-xl p-6 sm:p-8 text-center mb-8">
@@ -106,10 +179,16 @@ export default async function WithdrawPage() {
         ) : (
           <div className="bg-card border rounded-xl p-4 sm:p-6 mb-8">
             <h2 className="text-lg font-bold mb-4">新規出金申請</h2>
-            <WithdrawalForm
-              requiresVerification={requiresVerification}
-              existingBank={existingBank}
-            />
+            {availableBalance > 0 ? (
+              <WithdrawalForm
+                requiresVerification={requiresVerification}
+                existingBank={existingBank}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                出金可能な残高がありません
+              </p>
+            )}
           </div>
         )}
 
