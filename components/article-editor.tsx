@@ -199,11 +199,10 @@ export function ArticleEditor({
     const end = ta.selectionEnd;
     const selected = content.slice(start, end);
 
-    // Check if selection is already wrapped in a color span (including surrounding tags)
+    // Case 1: User selected the whole span including tags
     const wrapPattern = /^<span style="color:#[0-9a-fA-F]+">([\s\S]*)<\/span>$/;
     const wrapMatch = selected.match(wrapPattern);
     if (wrapMatch) {
-      // Replace existing color — strip old span and re-wrap with new color
       const innerText = wrapMatch[1];
       const newText = `<span style="color:${color}">${innerText}</span>`;
       const before = content.slice(0, start);
@@ -217,31 +216,37 @@ export function ArticleEditor({
       return;
     }
 
-    // Also check if cursor is inside an existing color span (no selection)
-    if (start === end) {
-      const spanRegex = /<span style="color:#[0-9a-fA-F]+">([\s\S]*?)<\/span>/g;
-      let match;
-      while ((match = spanRegex.exec(content)) !== null) {
-        const spanStart = match.index;
-        const spanEnd = spanStart + match[0].length;
-        if (start > spanStart && start < spanEnd) {
-          // Cursor is inside this span — replace its color
-          const innerText = match[1];
-          const newSpan = `<span style="color:${color}">${innerText}</span>`;
-          const before = content.slice(0, spanStart);
-          const after = content.slice(spanEnd);
-          setContent(before + newSpan + after);
-          requestAnimationFrame(() => {
-            ta.focus();
-            ta.setSelectionRange(spanStart, spanStart + newSpan.length);
-          });
-          setColorMenuOpen(false);
-          return;
-        }
+    // Case 2: User selected inner text, or cursor is inside a color span
+    // Look for any color span that overlaps with the selection
+    const spanRegex = /<span style="color:#[0-9a-fA-F]+">([\s\S]*?)<\/span>/g;
+    let match;
+    while ((match = spanRegex.exec(content)) !== null) {
+      const spanStart = match.index;
+      const spanEnd = spanStart + match[0].length;
+      const openTag = match[0].slice(0, match[0].indexOf(">") + 1);
+      const innerStart = spanStart + openTag.length;
+      const innerEnd = spanEnd - "</span>".length;
+
+      // Check if selection/cursor falls within this span's range
+      if (start >= innerStart && end <= innerEnd) {
+        // Selection is inside or equal to the inner text — replace the whole span's color
+        const innerText = match[1];
+        const newSpan = `<span style="color:${color}">${innerText}</span>`;
+        const before = content.slice(0, spanStart);
+        const after = content.slice(spanEnd);
+        setContent(before + newSpan + after);
+        requestAnimationFrame(() => {
+          ta.focus();
+          // Select the inner text in the new span
+          const newInnerStart = spanStart + `<span style="color:${color}">`.length;
+          ta.setSelectionRange(newInnerStart, newInnerStart + innerText.length);
+        });
+        setColorMenuOpen(false);
+        return;
       }
     }
 
-    // Default: wrap selection with new color span
+    // Case 3: No existing span — wrap selection with new color span
     insertMarkdown(`<span style="color:${color}">`, "</span>");
     setColorMenuOpen(false);
   };
