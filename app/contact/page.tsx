@@ -45,6 +45,20 @@ export default function ContactPage() {
           </div>
         </div>
 
+        {/* Email */}
+        <div className="mb-8 flex items-center gap-3 rounded-xl border border-border/60 bg-card px-5 py-4">
+          <span className="text-xl">✉️</span>
+          <p className="text-sm text-muted-foreground">
+            メールでのお問い合わせ:{" "}
+            <a
+              href="mailto:info@aiusestore.com"
+              className="font-semibold text-primary hover:underline"
+            >
+              info@aiusestore.com
+            </a>
+          </p>
+        </div>
+
         {/* Form card */}
         <div className="bg-card rounded-2xl border border-border/60 p-6 sm:p-8">
           <ContactForm />

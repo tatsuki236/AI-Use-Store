@@ -4,6 +4,7 @@ import { Header } from "@/components/header";
 import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
 import { CategoryRow } from "@/components/category-row";
+import { HeroGlow } from "@/components/ui/hero-glow";
 
 function getExcerpt(content: string, maxLength = 90): string {
   return content
@@ -112,6 +113,8 @@ export default async function HomePage() {
     .order("rating", { ascending: false })
     .limit(5);
 
+  const { data: heroStats } = await supabase.rpc("get_hero_stats");
+
   const featured = articles?.[0];
   const rest = articles?.slice(1);
 
@@ -120,37 +123,51 @@ export default async function HomePage() {
       <Header />
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/8 via-background to-accent/30">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
-        <div className="container mx-auto max-w-6xl px-4 py-14 sm:py-20 relative">
+      <section className="relative overflow-hidden bg-background">
+        <HeroGlow />
+        <div className="container mx-auto max-w-6xl px-4 py-16 sm:py-24 relative">
           <div className="max-w-2xl">
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+            <h1
+              className="hero-fade-up text-4xl sm:text-5xl font-black tracking-tight leading-[1.15]"
+              style={{ animation: "hero-fade-up 0.7s ease-out both" }}
+            >
               学びを、もっと
-              <span className="text-primary">自由</span>に。
+              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">自由</span>に。
             </h1>
-            <p className="mt-3 text-base sm:text-lg text-muted-foreground leading-relaxed">
+            <p
+              className="hero-fade-up mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed"
+              style={{ animation: "hero-fade-up 0.7s ease-out 0.15s both" }}
+            >
               AIスキルを、実践的な教材で学べる<br className="hidden sm:inline" />
               AI特化型ナレッジプラットフォーム
             </p>
-            <div className="mt-6 flex gap-3">
+            <div
+              className="hero-fade-up mt-7 flex gap-3"
+              style={{ animation: "hero-fade-up 0.7s ease-out 0.3s both" }}
+            >
               <Link href="/signup">
-                <Button className="rounded-full px-6">無料で始める</Button>
+                <Button className="h-11 rounded-full px-8 shadow-lg shadow-primary/20 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/25 transition-all duration-200">
+                  無料で始める
+                </Button>
               </Link>
             </div>
           </div>
 
-          {/* Trust Signals */}
-          <div className="mt-10 flex flex-wrap gap-6 sm:gap-10">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl sm:text-3xl font-extrabold text-primary">500+</span>
+          {/* Trust Signals - Glassmorphism */}
+          <div
+            className="hero-fade-up mt-12 flex flex-wrap gap-4 sm:gap-6"
+            style={{ animation: "hero-fade-up 0.7s ease-out 0.45s both" }}
+          >
+            <div className="flex items-center gap-2.5 rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/80 dark:border-white/10 px-5 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+              <span className="text-2xl sm:text-3xl font-extrabold text-primary">{heroStats?.article_count?.toLocaleString() ?? "0"}</span>
               <span className="text-xs sm:text-sm text-muted-foreground leading-tight">公開中の<br />コンテンツ</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl sm:text-3xl font-extrabold text-primary">1,000+</span>
-              <span className="text-xs sm:text-sm text-muted-foreground leading-tight">受講中の<br />ユーザー</span>
+            <div className="flex items-center gap-2.5 rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/80 dark:border-white/10 px-5 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+              <span className="text-2xl sm:text-3xl font-extrabold text-primary">{heroStats?.user_count?.toLocaleString() ?? "0"}</span>
+              <span className="text-xs sm:text-sm text-muted-foreground leading-tight">登録<br />ユーザー</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600">98%</span>
+            <div className="flex items-center gap-2.5 rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/80 dark:border-white/10 px-5 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+              <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600">{heroStats?.satisfaction_percent != null ? `${heroStats.satisfaction_percent}%` : "--%"}</span>
               <span className="text-xs sm:text-sm text-muted-foreground leading-tight">学習<br />満足度</span>
             </div>
           </div>
@@ -372,6 +389,7 @@ export default async function HomePage() {
                 <li><Link href="/privacy" className="hover:text-foreground transition-colors">プライバシーポリシー</Link></li>
                 <li><Link href="/legal" className="hover:text-foreground transition-colors">特定商取引法に基づく表記</Link></li>
                 <li><Link href="/contact" className="hover:text-foreground transition-colors">お問い合わせ</Link></li>
+                <li><a href="mailto:info@aiusestore.com" className="hover:text-foreground transition-colors">info@aiusestore.com</a></li>
               </ul>
             </div>
           </div>

@@ -60,9 +60,9 @@ const sections = [
   {
     title: "7. お問い合わせ",
     icon: "💬",
-    content: "プライバシーポリシーに関するお問い合わせは、",
-    link: { href: "/contact", label: "お問い合わせフォーム" },
-    contentAfter: "よりご連絡ください。",
+    content: "プライバシーポリシーに関するお問い合わせは、メール（",
+    link: { href: "mailto:info@aiusestore.com", label: "info@aiusestore.com" },
+    contentAfter: "）またはお問い合わせフォームよりご連絡ください。",
   },
 ];
 

@@ -7,9 +7,11 @@ const legalInfo = [
   { label: "所在地", value: "東京都（詳細はお問い合わせください）", icon: "📍" },
   {
     label: "連絡先",
-    value: "お問い合わせフォームよりご連絡ください",
-    href: "/contact",
+    value: "info@aiusestore.com",
+    href: "mailto:info@aiusestore.com",
     icon: "📧",
+    extra: "（またはお問い合わせフォーム）",
+    extraHref: "/contact",
   },
   { label: "販売価格", value: "各教材ページに記載の価格（税込）", icon: "💰" },
   { label: "追加費用", value: "なし（通信料等はお客様負担）", icon: "📝" },
@@ -57,12 +59,22 @@ export default function LegalPage() {
                 </dt>
                 <dd className="mt-1 text-sm leading-relaxed">
                   {item.href ? (
-                    <Link
-                      href={item.href}
-                      className="text-primary hover:underline"
-                    >
-                      {item.value}
-                    </Link>
+                    <>
+                      <a
+                        href={item.href}
+                        className="text-primary hover:underline"
+                      >
+                        {item.value}
+                      </a>
+                      {"extra" in item && "extraHref" in item && (
+                        <>
+                          {" "}
+                          <Link href={(item as { extraHref: string }).extraHref} className="text-primary hover:underline">
+                            {(item as { extra: string }).extra}
+                          </Link>
+                        </>
+                      )}
+                    </>
                   ) : (
                     item.value
                   )}

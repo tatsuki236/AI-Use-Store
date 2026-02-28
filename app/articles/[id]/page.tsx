@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArticleBody } from "./article-body";
 import { PurchaseButton } from "./purchase-button";
+import { ReviewForm } from "./review-form";
+import { ReviewList } from "./review-list";
 
 export async function generateMetadata({
   params,
@@ -63,8 +65,17 @@ function getThumbnailColor(title: string): string {
 }
 
 function getPreviewContent(content: string): string {
+  const paywallMarker = "<!-- paywall -->";
+  if (content.includes(paywallMarker)) {
+    return content.split(paywallMarker)[0].trim();
+  }
+  // Fallback: first 3 paragraphs
   const paragraphs = content.split(/\n\n+/);
   return paragraphs.slice(0, 3).join("\n\n");
+}
+
+function getFullContent(content: string): string {
+  return content.replace(/<!--\s*paywall\s*-->/g, "");
 }
 
 export default async function ArticlePage({
@@ -103,6 +114,18 @@ export default async function ArticlePage({
   const isFree = article.is_free;
   const hasAccess = isFree || purchaseStatus === "completed";
   const isPending = purchaseStatus === "pending";
+
+  // Fetch reviews for this article
+  const { data: reviews } = await supabase
+    .from("reviews")
+    .select("id, user_id, rating, comment, created_at")
+    .eq("article_id", id)
+    .order("created_at", { ascending: false });
+
+  // Check if current user already reviewed
+  const existingReview = user
+    ? (reviews ?? []).find((r) => r.user_id === user.id) ?? null
+    : null;
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -165,7 +188,7 @@ export default async function ArticlePage({
           {/* Article Content */}
           {hasAccess ? (
             <div className="px-6 sm:px-10 pb-10">
-              <ArticleBody content={article.content} />
+              <ArticleBody content={getFullContent(article.content)} />
             </div>
           ) : (
             <>
@@ -218,6 +241,24 @@ export default async function ArticlePage({
               </div>
             </>
           )}
+        </div>
+
+        {/* Review Section */}
+        <div className="mt-8 bg-card rounded-2xl shadow-sm border border-border/60 overflow-hidden px-6 sm:px-10 py-8">
+          <h2 className="text-lg font-bold mb-6">レビュー</h2>
+
+          {/* Review Form - show if user is logged in and has access */}
+          {user && hasAccess && (
+            <div className="mb-8 pb-6 border-b border-border/60">
+              <ReviewForm
+                articleId={id}
+                existingReview={existingReview ? { rating: existingReview.rating, comment: existingReview.comment } : null}
+              />
+            </div>
+          )}
+
+          {/* Review List */}
+          <ReviewList reviews={reviews ?? []} />
         </div>
 
         {/* Footer Actions */}

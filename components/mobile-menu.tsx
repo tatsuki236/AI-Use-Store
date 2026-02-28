@@ -14,6 +14,16 @@ export function MobileMenuButton({
 }) {
   const [open, setOpen] = useState(false);
 
+  const close = () => setOpen(false);
+
+  const linkClass =
+    "px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors";
+  const mutedLinkClass =
+    "px-5 py-3 text-sm text-muted-foreground hover:bg-muted/50 transition-colors";
+  const sectionLabel =
+    "px-5 pt-4 pb-1 text-xs font-semibold text-muted-foreground tracking-wider uppercase";
+  const divider = "border-t border-border/50 my-1";
+
   return (
     <>
       <button
@@ -33,78 +43,89 @@ export function MobileMenuButton({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 bg-white border-b border-border shadow-lg z-50">
-          <nav className="flex flex-col py-2">
-            <Link
-              href="/"
-              onClick={() => setOpen(false)}
-              className="px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors"
-            >
-              トップ
-            </Link>
-            <Link
-              href="/search"
-              onClick={() => setOpen(false)}
-              className="px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors"
-            >
-              教材を探す
-            </Link>
-            {isLoggedIn && (
-              <Link
-                href={sellerStatus === "approved" ? "/sell" : "/seller/register"}
-                onClick={() => setOpen(false)}
-                className="px-5 py-3 text-sm font-medium text-primary hover:bg-muted/50 transition-colors"
-              >
-                出品する
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/20 z-40"
+            onClick={close}
+          />
+
+          <div className="absolute top-full left-0 right-0 bg-white border-b border-border shadow-lg z-50 max-h-[80vh] overflow-y-auto">
+            <nav className="flex flex-col py-2">
+              {/* Main navigation */}
+              <Link href="/" onClick={close} className={linkClass}>
+                トップ
               </Link>
-            )}
-            {isAdmin && (
-              <Link
-                href="/admin"
-                onClick={() => setOpen(false)}
-                className="px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors"
-              >
-                管理画面
+              <Link href="/search" onClick={close} className={linkClass}>
+                教材を探す
               </Link>
-            )}
-            <div className="border-t border-border/50 my-1" />
-            {isLoggedIn ? (
-              <form action="/auth/signout" method="post" className="contents">
-                <button
-                  type="submit"
-                  className="px-5 py-3 text-sm font-medium text-left text-muted-foreground hover:bg-muted/50 transition-colors"
-                >
-                  ログアウト
-                </button>
-              </form>
-            ) : (
-              <>
+              {isLoggedIn && (
                 <Link
-                  href="/login"
-                  onClick={() => setOpen(false)}
-                  className="px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors"
+                  href={sellerStatus === "approved" ? "/sell" : "/seller/register"}
+                  onClick={close}
+                  className={`${linkClass} text-primary`}
                 >
-                  ログイン
+                  出品する
                 </Link>
-                <Link
-                  href="/signup"
-                  onClick={() => setOpen(false)}
-                  className="px-5 py-3 text-sm font-medium text-primary hover:bg-muted/50 transition-colors"
-                >
-                  新規登録
-                </Link>
-              </>
-            )}
-            <div className="border-t border-border/50 my-1" />
-            <Link
-              href="/contact"
-              onClick={() => setOpen(false)}
-              className="px-5 py-3 text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
-            >
-              お問い合わせ
-            </Link>
-          </nav>
-        </div>
+              )}
+
+              {/* Logged-in user sections */}
+              {isLoggedIn && (
+                <>
+                  <div className={divider} />
+                  <div className={sectionLabel}>設定</div>
+                  <Link href="/account" onClick={close} className={linkClass}>
+                    アカウント
+                  </Link>
+                  <Link href="/purchases" onClick={close} className={linkClass}>
+                    購入履歴
+                  </Link>
+                  {sellerStatus === "approved" && (
+                    <Link href="/sell/withdraw" onClick={close} className={linkClass}>
+                      お支払先
+                    </Link>
+                  )}
+                </>
+              )}
+
+              {/* Admin */}
+              {isAdmin && (
+                <>
+                  <div className={divider} />
+                  <Link href="/admin" onClick={close} className={linkClass}>
+                    管理画面
+                  </Link>
+                </>
+              )}
+
+              <div className={divider} />
+
+              {/* Auth & footer */}
+              {isLoggedIn ? (
+                <form action="/auth/signout" method="post" className="contents">
+                  <button
+                    type="submit"
+                    className={`${mutedLinkClass} text-left`}
+                  >
+                    ログアウト
+                  </button>
+                </form>
+              ) : (
+                <>
+                  <Link href="/login" onClick={close} className={linkClass}>
+                    ログイン
+                  </Link>
+                  <Link href="/signup" onClick={close} className={`${linkClass} text-primary`}>
+                    新規登録
+                  </Link>
+                </>
+              )}
+              <Link href="/contact" onClick={close} className={mutedLinkClass}>
+                お問い合わせ
+              </Link>
+            </nav>
+          </div>
+        </>
       )}
     </>
   );

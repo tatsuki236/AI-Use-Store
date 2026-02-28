@@ -40,6 +40,11 @@ export default async function AdminLayout({
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {user.email}
             </span>
+            <Link href="/account">
+              <Button variant="outline" size="sm">
+                アカウント
+              </Button>
+            </Link>
             <form action="/auth/signout" method="post">
               <Button variant="outline" size="sm">
                 ログアウト

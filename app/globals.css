@@ -126,6 +126,48 @@
   }
 }
 
+/* Hero section animations */
+@keyframes hero-float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 15px) scale(0.95); }
+}
+
+@keyframes hero-float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-25px, 25px) scale(1.08); }
+  66% { transform: translate(20px, -30px) scale(0.92); }
+}
+
+@keyframes hero-float-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20px, 20px) scale(0.96); }
+  66% { transform: translate(-30px, -15px) scale(1.04); }
+}
+
+@keyframes hero-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-float-1,
+  .hero-float-2,
+  .hero-float-3 {
+    animation: none !important;
+  }
+  .hero-fade-up {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
 /* Hide scrollbar for horizontal scroll containers */
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -217,6 +259,79 @@
   padding: 0;
   border-radius: 0;
   color: inherit;
+}
+
+/* highlight.js GitHub Dark theme (inline) */
+.article-content pre code.hljs {
+  display: block;
+  overflow-x: auto;
+}
+.hljs {
+  color: #c9d1d9;
+  background: oklch(0.17 0 0);
+}
+.hljs-keyword,
+.hljs-selector-tag {
+  color: #ff7b72;
+}
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.function_ {
+  color: #d2a8ff;
+}
+.hljs-attr,
+.hljs-attribute {
+  color: #79c0ff;
+}
+.hljs-string,
+.hljs-template-tag,
+.hljs-template-variable {
+  color: #a5d6ff;
+}
+.hljs-number,
+.hljs-literal {
+  color: #79c0ff;
+}
+.hljs-built_in {
+  color: #ffa657;
+}
+.hljs-comment,
+.hljs-doctag {
+  color: #8b949e;
+  font-style: italic;
+}
+.hljs-variable,
+.hljs-meta {
+  color: #ffa657;
+}
+.hljs-type,
+.hljs-params {
+  color: #ffa657;
+}
+.hljs-regexp {
+  color: #7ee787;
+}
+.hljs-addition {
+  color: #aff5b4;
+  background-color: rgba(46, 160, 67, 0.15);
+}
+.hljs-deletion {
+  color: #ffdcd7;
+  background-color: rgba(248, 81, 73, 0.15);
+}
+.hljs-symbol,
+.hljs-bullet {
+  color: #ffa657;
+}
+.hljs-section {
+  color: #1f6feb;
+  font-weight: 700;
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: 700;
 }
 
 .article-content table {
