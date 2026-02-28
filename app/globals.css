@@ -379,3 +379,83 @@
 .article-content span[style] {
   font-weight: inherit;
 }
+
+/* === Tiptap Editor Styles === */
+
+/* Editor area inherits article-content styles */
+.editor-area {
+  min-height: calc(100vh - 16rem);
+  cursor: text;
+}
+
+/* Placeholder */
+.editor-area p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--muted-foreground);
+  opacity: 0.5;
+  float: left;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Paywall divider in editor */
+div[data-paywall] {
+  border: 2px dashed oklch(0.75 0.15 85);
+  padding: 0.5rem 1rem;
+  text-align: center;
+  margin: 1.5rem 0;
+  border-radius: 0.5rem;
+  background: oklch(0.96 0.05 85);
+  color: oklch(0.45 0.12 60);
+  font-size: 0.875rem;
+  font-weight: 600;
+  user-select: none;
+}
+div[data-paywall]::after {
+  content: "ここから有料";
+}
+
+/* YouTube embed in editor */
+div[data-youtube-video] {
+  margin: 1.5rem 0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+div[data-youtube-video] iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+}
+
+/* Editor image */
+.editor-area img.editor-image {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+}
+
+/* Toolbar button styles */
+.toolbar-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.15s, color 0.15s;
+  color: var(--muted-foreground);
+}
+.toolbar-btn:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+.toolbar-btn.is-active {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.toolbar-sep {
+  display: inline-block;
+  width: 1px;
+  height: 1.25rem;
+  background: var(--border);
+  margin: 0 0.25rem;
+  vertical-align: middle;
+}

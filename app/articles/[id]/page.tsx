@@ -65,17 +65,28 @@ function getThumbnailColor(title: string): string {
 }
 
 function getPreviewContent(content: string): string {
-  const paywallMarker = "<!-- paywall -->";
-  if (content.includes(paywallMarker)) {
-    return content.split(paywallMarker)[0].trim();
+  // HTML paywall marker (from Tiptap editor)
+  if (content.includes("data-paywall")) {
+    return content.split(/<div[^>]*data-paywall[^>]*>[\s\S]*?<\/div>/)[0].trim();
   }
-  // Fallback: first 3 paragraphs
+  // Markdown paywall marker (legacy)
+  if (content.includes("<!-- paywall -->")) {
+    return content.split("<!-- paywall -->")[0].trim();
+  }
+  // Fallback: first 3 paragraphs (Markdown) or first portion (HTML)
+  if (/<(?:p|h[1-6]|div)\b/i.test(content)) {
+    // HTML: take first ~500 chars worth of tags
+    const parts = content.split(/<\/(?:p|h[1-6])>/i);
+    return parts.slice(0, 3).join("</p>") + "</p>";
+  }
   const paragraphs = content.split(/\n\n+/);
   return paragraphs.slice(0, 3).join("\n\n");
 }
 
 function getFullContent(content: string): string {
-  return content.replace(/<!--\s*paywall\s*-->/g, "");
+  return content
+    .replace(/<div[^>]*data-paywall[^>]*>[\s\S]*?<\/div>/g, "")
+    .replace(/<!--\s*paywall\s*-->/g, "");
 }
 
 export default async function ArticlePage({

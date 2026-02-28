@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -38,50 +38,87 @@ function extractText(node: React.ReactNode): string {
   return "";
 }
 
-function extractYouTubeId(url: string): string | null {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-    /^([a-zA-Z0-9_-]{11})$/,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
-  }
-  return null;
+/** Detect if content is HTML (from Tiptap) rather than Markdown */
+function isHtmlContent(content: string): boolean {
+  return /<(?:p|h[1-6]|div|ul|ol|blockquote|pre|figure)\b/i.test(content);
 }
 
-/** Transform ::youtube[URL] directives into <div data-youtube="VIDEO_ID"> before markdown parsing */
-function preprocessContent(content: string): string {
-  return content.replace(
-    /::youtube\[([^\]]+)\]/g,
-    (_match, url: string) => {
-      const videoId = extractYouTubeId(url.trim());
-      if (videoId) {
-        return `<div data-youtube="${videoId}"></div>`;
+/** HTML rendering component with copy buttons on code blocks */
+function HtmlArticleBody({ content }: { content: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Add copy buttons to code blocks
+    container.querySelectorAll("pre").forEach((pre) => {
+      if (pre.querySelector(".copy-btn")) return;
+      const code = pre.querySelector("code");
+      if (!code) return;
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "relative group";
+      pre.parentNode?.insertBefore(wrapper, pre);
+      wrapper.appendChild(pre);
+
+      const btn = document.createElement("button");
+      btn.className =
+        "copy-btn absolute top-2 right-2 px-2 py-1 text-xs rounded bg-white/10 hover:bg-white/20 text-gray-300 transition-colors";
+      btn.textContent = "コピー";
+      btn.onclick = async () => {
+        await navigator.clipboard.writeText(code.textContent || "");
+        btn.textContent = "コピーしました";
+        setTimeout(() => {
+          btn.textContent = "コピー";
+        }, 2000);
+      };
+      wrapper.insertBefore(btn, pre);
+    });
+
+    // Apply syntax highlighting
+    container.querySelectorAll("pre code").forEach((block) => {
+      if (!(block as HTMLElement).classList.contains("hljs")) {
+        import("highlight.js").then((hljs) => {
+          hljs.default.highlightElement(block as HTMLElement);
+        });
       }
-      return _match;
-    }
-  );
-}
+    });
+  }, [content]);
 
-function YouTubeEmbed({ videoId }: { videoId: string }) {
   return (
-    <div className="my-6 rounded-xl overflow-hidden shadow-md">
-      <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-        <iframe
-          className="absolute top-0 left-0 w-full h-full"
-          src={`https://www.youtube-nocookie.com/embed/${videoId}`}
-          title="YouTube video"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
-    </div>
+    <div
+      ref={containerRef}
+      className="article-content"
+      dangerouslySetInnerHTML={{ __html: content }}
+    />
   );
 }
 
 export function ArticleBody({ content }: { content: string }) {
-  const processed = preprocessContent(content);
+  // HTML content from Tiptap editor
+  if (isHtmlContent(content)) {
+    return <HtmlArticleBody content={content} />;
+  }
+
+  // Legacy Markdown content
+  // Preprocess ::youtube directives
+  const processed = content.replace(
+    /::youtube\[([^\]]+)\]/g,
+    (_match, url: string) => {
+      const m = url
+        .trim()
+        .match(
+          /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/
+        );
+      if (m) {
+        return `<div data-youtube="${m[1]}"></div>`;
+      }
+      return _match;
+    }
+  );
 
   return (
     <div className="article-content">
@@ -99,9 +136,25 @@ export function ArticleBody({ content }: { content: string }) {
             );
           },
           div({ node, children, ...props }) {
-            const youtubeId = (node?.properties?.dataYoutube as string) ?? null;
+            const youtubeId =
+              (node?.properties?.dataYoutube as string) ?? null;
             if (youtubeId) {
-              return <YouTubeEmbed videoId={youtubeId} />;
+              return (
+                <div className="my-6 rounded-xl overflow-hidden shadow-md">
+                  <div
+                    className="relative w-full"
+                    style={{ paddingBottom: "56.25%" }}
+                  >
+                    <iframe
+                      className="absolute top-0 left-0 w-full h-full"
+                      src={`https://www.youtube-nocookie.com/embed/${youtubeId}`}
+                      title="YouTube video"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
+              );
             }
             return <div {...props}>{children}</div>;
           },

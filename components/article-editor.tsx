@@ -1,7 +1,26 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Color } from "@tiptap/extension-color";
+import LinkExtension from "@tiptap/extension-link";
+import ImageExtension from "@tiptap/extension-image";
+import Youtube from "@tiptap/extension-youtube";
+import Placeholder from "@tiptap/extension-placeholder";
+import { Node, mergeAttributes, type Editor } from "@tiptap/core";
+import { marked } from "marked";
+
+// Extend commands interface for PaywallDivider
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    paywallDivider: {
+      setPaywallDivider: () => ReturnType;
+    };
+  }
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +32,31 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ArticleBody } from "@/app/articles/[id]/article-body";
+
+// Custom paywall divider node
+const PaywallDivider = Node.create({
+  name: "paywallDivider",
+  group: "block",
+  atom: true,
+
+  parseHTML() {
+    return [{ tag: 'div[data-paywall]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["div", mergeAttributes(HTMLAttributes, { "data-paywall": "true" })];
+  },
+
+  addCommands() {
+    return {
+      setPaywallDivider:
+        () =>
+        ({ commands }) => {
+          return commands.insertContent({ type: this.name });
+        },
+    };
+  },
+});
 
 type ArticleEditorProps = {
   formAction: (formData: FormData) => void;
@@ -27,20 +71,52 @@ type ArticleEditorProps = {
   rejectionNotice?: React.ReactNode;
 };
 
+/** Detect if content is Markdown (vs HTML from Tiptap) */
+function isMarkdownContent(content: string): boolean {
+  return !/<(?:p|h[1-6]|div|ul|ol|blockquote|pre|figure)\b/i.test(content);
+}
+
+/** Convert old Markdown content to HTML for Tiptap loading */
+function convertMarkdownToHtml(markdown: string): string {
+  // Convert custom directives first
+  let processed = markdown.replace(
+    /::youtube\[([^\]]+)\]/g,
+    (_match, url: string) => {
+      const m = url
+        .trim()
+        .match(
+          /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/
+        );
+      if (m) {
+        return `<div data-youtube-video><iframe src="https://www.youtube.com/embed/${m[1]}"></iframe></div>`;
+      }
+      return _match;
+    }
+  );
+
+  // Convert <!-- paywall --> to div
+  processed = processed.replace(
+    /<!--\s*paywall\s*-->/g,
+    '<div data-paywall="true"></div>'
+  );
+
+  return marked.parse(processed) as string;
+}
+
+const TEXT_COLORS = [
+  { label: "赤", value: "#ef4444", bg: "bg-red-500" },
+  { label: "青", value: "#3b82f6", bg: "bg-blue-500" },
+  { label: "緑", value: "#22c55e", bg: "bg-green-500" },
+  { label: "紫", value: "#a855f7", bg: "bg-purple-500" },
+  { label: "オレンジ", value: "#f97316", bg: "bg-orange-500" },
+  { label: "ピンク", value: "#ec4899", bg: "bg-pink-500" },
+  { label: "黄", value: "#eab308", bg: "bg-yellow-500" },
+  { label: "シアン", value: "#06b6d4", bg: "bg-cyan-500" },
+];
+
 const CODE_LANGUAGES = [
-  "javascript",
-  "typescript",
-  "python",
-  "html",
-  "css",
-  "bash",
-  "json",
-  "sql",
-  "go",
-  "rust",
-  "java",
-  "c",
-  "cpp",
+  "javascript", "typescript", "python", "html", "css",
+  "bash", "json", "sql", "go", "rust", "java",
 ];
 
 export function ArticleEditor({
@@ -49,8 +125,6 @@ export function ArticleEditor({
   rejectionNotice,
 }: ArticleEditorProps) {
   const formRef = useRef<HTMLFormElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [price, setPrice] = useState(article?.price ?? 0);
   const [thumbnailUrl, setThumbnailUrl] = useState(
@@ -58,9 +132,60 @@ export function ArticleEditor({
   );
   const [isFree, setIsFree] = useState(article?.is_free ?? true);
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
-  const [content, setContent] = useState(article?.content ?? "");
-  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [content, setContent] = useState("");
   const [colorMenuOpen, setColorMenuOpen] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+
+  // Prepare initial content
+  const initialContent = article?.content
+    ? isMarkdownContent(article.content)
+      ? convertMarkdownToHtml(article.content)
+      : article.content
+    : "";
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        codeBlock: {
+          HTMLAttributes: { class: "code-block" },
+        },
+      }),
+      TextStyle,
+      Color,
+      LinkExtension.configure({
+        openOnClick: false,
+        HTMLAttributes: { target: "_blank", rel: "noopener noreferrer" },
+      }),
+      ImageExtension.configure({
+        HTMLAttributes: { class: "editor-image" },
+      }),
+      Youtube.configure({
+        width: 640,
+        height: 360,
+        HTMLAttributes: { class: "youtube-embed" },
+      }),
+      Placeholder.configure({
+        placeholder: "ここに本文を書く...",
+      }),
+      PaywallDivider,
+    ],
+    content: initialContent,
+    onUpdate: ({ editor }) => {
+      setContent(editor.getHTML());
+    },
+    editorProps: {
+      attributes: {
+        class: "article-content editor-area outline-none",
+      },
+    },
+  });
+
+  // Set initial content state
+  useEffect(() => {
+    if (editor && !content) {
+      setContent(editor.getHTML());
+    }
+  }, [editor, content]);
 
   function handleSubmit(actionType: "draft" | "submit") {
     if (!formRef.current) return;
@@ -71,248 +196,67 @@ export function ArticleEditor({
     formRef.current.requestSubmit();
   }
 
-  const insertMarkdown = useCallback(
-    (prefix: string, suffix: string = "") => {
-      const ta = textareaRef.current;
-      if (!ta) return;
-      const start = ta.selectionStart;
-      const end = ta.selectionEnd;
-      const selected = content.slice(start, end);
-      const before = content.slice(0, start);
-      const after = content.slice(end);
-
-      const newText = before + prefix + selected + suffix + after;
-      setContent(newText);
-
-      // Restore focus and cursor position after React re-renders
-      requestAnimationFrame(() => {
-        ta.focus();
-        const cursorPos = selected
-          ? start + prefix.length + selected.length + suffix.length
-          : start + prefix.length;
-        ta.setSelectionRange(cursorPos, cursorPos);
-      });
-    },
-    [content]
-  );
-
-  const insertBlock = useCallback(
-    (block: string) => {
-      const ta = textareaRef.current;
-      if (!ta) return;
-      const start = ta.selectionStart;
-      const before = content.slice(0, start);
-      const after = content.slice(start);
-
-      // Ensure newlines around block
-      const needNewlineBefore = before.length > 0 && !before.endsWith("\n\n");
-      const needNewlineAfter = after.length > 0 && !after.startsWith("\n\n");
-      const pre = needNewlineBefore ? (before.endsWith("\n") ? "\n" : "\n\n") : "";
-      const post = needNewlineAfter ? (after.startsWith("\n") ? "\n" : "\n\n") : "";
-
-      const newText = before + pre + block + post + after;
-      setContent(newText);
-
-      requestAnimationFrame(() => {
-        ta.focus();
-        const cursorPos = before.length + pre.length + block.length;
-        ta.setSelectionRange(cursorPos, cursorPos);
-      });
-    },
-    [content]
-  );
-
-  const syncScroll = useCallback(() => {
-    if (overlayRef.current && textareaRef.current) {
-      overlayRef.current.scrollTop = textareaRef.current.scrollTop;
-      overlayRef.current.scrollLeft = textareaRef.current.scrollLeft;
-    }
-  }, []);
-
-  /** Render content with color spans visually highlighted */
-  function renderHighlightedContent(text: string) {
-    const regex = /(<span style="color:(#[0-9a-fA-F]+)">)([\s\S]*?)(<\/span>)/g;
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-    let match;
-    let key = 0;
-
-    while ((match = regex.exec(text)) !== null) {
-      // Normal text before this span
-      if (match.index > lastIndex) {
-        parts.push(<span key={key++}>{text.slice(lastIndex, match.index)}</span>);
-      }
-      const color = match[2];
-      // Opening tag — dimmed
-      parts.push(<span key={key++} className="opacity-30">{match[1]}</span>);
-      // Colored inner text
-      parts.push(<span key={key++} style={{ color }}>{match[3]}</span>);
-      // Closing tag — dimmed
-      parts.push(<span key={key++} className="opacity-30">{match[4]}</span>);
-
-      lastIndex = match.index + match[0].length;
-    }
-
-    // Remaining text
-    if (lastIndex < text.length) {
-      parts.push(<span key={key++}>{text.slice(lastIndex)}</span>);
-    }
-    // Extra newline to match textarea trailing behavior
-    parts.push(<br key={key++} />);
-    return parts;
-  }
-
-  const hasColorSpans = /<span style="color:#[0-9a-fA-F]+">/.test(content);
-
-  const toolbarButtons = [
-    {
-      group: "heading",
-      items: [
-        { label: "H2", title: "見出し2", action: () => insertMarkdown("## ") },
-        { label: "H3", title: "見出し3", action: () => insertMarkdown("### ") },
-      ],
-    },
-    {
-      group: "format",
-      items: [
-        { label: "B", title: "太字", action: () => insertMarkdown("**", "**"), bold: true },
-        { label: "I", title: "斜体", action: () => insertMarkdown("*", "*"), italic: true },
-        { label: "S", title: "取り消し線", action: () => insertMarkdown("~~", "~~"), strike: true },
-      ],
-    },
-    {
-      group: "list",
-      items: [
-        { label: "•", title: "箇条書き", action: () => insertMarkdown("- ") },
-        { label: "1.", title: "番号付きリスト", action: () => insertMarkdown("1. ") },
-      ],
-    },
-    {
-      group: "block",
-      items: [
-        { label: ">", title: "引用", action: () => insertMarkdown("> ") },
-        { label: "</>", title: "インラインコード", action: () => insertMarkdown("`", "`") },
-        {
-          label: "{ }",
-          title: "コードブロック",
-          action: () => setLangMenuOpen(true),
-        },
-      ],
-    },
-    {
-      group: "rich",
-      items: [
-        {
-          label: "A",
-          title: "文字色",
-          action: () => setColorMenuOpen(true),
-          colorBtn: true,
-        },
-        { label: "▶", title: "YouTube埋め込み", action: () => {
-          const url = prompt("YouTube URLを入力してください");
-          if (url) insertBlock(`::youtube[${url}]`);
-        }},
-      ],
-    },
-    {
-      group: "insert",
-      items: [
-        { label: "🔗", title: "リンク", action: () => insertMarkdown("[", "](url)") },
-        { label: "🖼", title: "画像", action: () => insertMarkdown("![alt](", ")") },
-        { label: "―", title: "区切り線", action: () => insertBlock("---") },
-      ],
-    },
-  ];
-
-  const TEXT_COLORS = [
-    { label: "赤", value: "#ef4444", bg: "bg-red-500" },
-    { label: "青", value: "#3b82f6", bg: "bg-blue-500" },
-    { label: "緑", value: "#22c55e", bg: "bg-green-500" },
-    { label: "紫", value: "#a855f7", bg: "bg-purple-500" },
-    { label: "オレンジ", value: "#f97316", bg: "bg-orange-500" },
-    { label: "ピンク", value: "#ec4899", bg: "bg-pink-500" },
-    { label: "黄", value: "#eab308", bg: "bg-yellow-500" },
-    { label: "シアン", value: "#06b6d4", bg: "bg-cyan-500" },
-  ];
-
-  const insertColor = (color: string) => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const selected = content.slice(start, end);
-
-    // Case 1: User selected the whole span including tags
-    const wrapPattern = /^<span style="color:#[0-9a-fA-F]+">([\s\S]*)<\/span>$/;
-    const wrapMatch = selected.match(wrapPattern);
-    if (wrapMatch) {
-      const innerText = wrapMatch[1];
-      const newText = `<span style="color:${color}">${innerText}</span>`;
-      const before = content.slice(0, start);
-      const after = content.slice(end);
-      setContent(before + newText + after);
-      requestAnimationFrame(() => {
-        ta.focus();
-        ta.setSelectionRange(start, start + newText.length);
-      });
-      setColorMenuOpen(false);
+  const setLink = useCallback(() => {
+    if (!editor) return;
+    const previousUrl = editor.getAttributes("link").href;
+    const url = window.prompt("URLを入力", previousUrl);
+    if (url === null) return;
+    if (url === "") {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+  }, [editor]);
 
-    // Case 2: User selected inner text, or cursor is inside a color span
-    // Look for any color span that overlaps with the selection
-    const spanRegex = /<span style="color:#[0-9a-fA-F]+">([\s\S]*?)<\/span>/g;
-    let match;
-    while ((match = spanRegex.exec(content)) !== null) {
-      const spanStart = match.index;
-      const spanEnd = spanStart + match[0].length;
-      const openTag = match[0].slice(0, match[0].indexOf(">") + 1);
-      const innerStart = spanStart + openTag.length;
-      const innerEnd = spanEnd - "</span>".length;
-
-      // Check if selection/cursor falls within this span's range
-      if (start >= innerStart && end <= innerEnd) {
-        // Selection is inside or equal to the inner text — replace the whole span's color
-        const innerText = match[1];
-        const newSpan = `<span style="color:${color}">${innerText}</span>`;
-        const before = content.slice(0, spanStart);
-        const after = content.slice(spanEnd);
-        setContent(before + newSpan + after);
-        requestAnimationFrame(() => {
-          ta.focus();
-          // Select the inner text in the new span
-          const newInnerStart = spanStart + `<span style="color:${color}">`.length;
-          ta.setSelectionRange(newInnerStart, newInnerStart + innerText.length);
-        });
-        setColorMenuOpen(false);
-        return;
-      }
+  const addImage = useCallback(() => {
+    if (!editor) return;
+    const url = window.prompt("画像URLを入力");
+    if (url) {
+      editor.chain().focus().setImage({ src: url }).run();
     }
+  }, [editor]);
 
-    // Case 3: No existing span — wrap selection with new color span
-    insertMarkdown(`<span style="color:${color}">`, "</span>");
+  const addYoutube = useCallback(() => {
+    if (!editor) return;
+    const url = window.prompt("YouTube URLを入力");
+    if (url) {
+      editor.commands.setYoutubeVideo({ src: url });
+    }
+  }, [editor]);
+
+  const setColor = useCallback(
+    (color: string) => {
+      if (!editor) return;
+      editor.chain().focus().setColor(color).run();
+      setColorMenuOpen(false);
+    },
+    [editor]
+  );
+
+  const unsetColor = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().unsetColor().run();
     setColorMenuOpen(false);
-  };
+  }, [editor]);
 
-  const insertCodeBlock = (lang: string) => {
-    insertBlock("```" + lang + "\n\n```");
-    setLangMenuOpen(false);
-    // Place cursor inside the code block
-    requestAnimationFrame(() => {
-      const ta = textareaRef.current;
-      if (!ta) return;
-      const idx = content.indexOf("```" + lang + "\n");
-      if (idx === -1) {
-        // After insertBlock, find the inserted block
-        const pos = ta.selectionStart - 4; // before closing ```
-        ta.setSelectionRange(pos, pos);
+  const insertCodeBlock = useCallback(
+    (language: string) => {
+      if (!editor) return;
+      editor.chain().focus().toggleCodeBlock().run();
+      // Set language attribute on the code block
+      if (language) {
+        editor.chain().focus().updateAttributes("codeBlock", { language }).run();
       }
-    });
-  };
+      setLangMenuOpen(false);
+    },
+    [editor]
+  );
+
+  if (!editor) return null;
 
   return (
     <form ref={formRef} action={formAction}>
-      {/* Hidden inputs for server action compatibility */}
+      {/* Hidden inputs */}
       <input type="hidden" name="action" value="draft" />
       <input type="hidden" name="price" value={price} />
       <input type="hidden" name="thumbnail_url" value={thumbnailUrl} />
@@ -391,38 +335,143 @@ export function ArticleEditor({
           {activeTab === "edit" ? (
             <>
               {/* Toolbar */}
-              <div className="sticky top-14 z-40 bg-white border-b border-border/60 -mx-4 px-4 py-2 mb-4 flex flex-wrap items-center gap-1">
-                {toolbarButtons.map((group) => (
-                  <div key={group.group} className="flex items-center gap-0.5 mr-2">
-                    {group.items.map((btn) => (
-                      <button
-                        key={btn.label}
-                        type="button"
-                        title={btn.title}
-                        onClick={btn.action}
-                        className={`px-2 py-1 text-sm rounded hover:bg-muted transition-colors ${
-                          "bold" in btn && btn.bold ? "font-bold" : ""
-                        } ${
-                          "italic" in btn && btn.italic ? "italic" : ""
-                        } ${
-                          "strike" in btn && btn.strike ? "line-through" : ""
-                        } ${
-                          "colorBtn" in btn && btn.colorBtn ? "bg-gradient-to-r from-red-500 via-blue-500 to-green-500 bg-clip-text text-transparent font-bold" : ""
-                        }`}
-                      >
-                        {btn.label}
-                      </button>
-                    ))}
-                  </div>
-                ))}
+              <div className="sticky top-14 z-40 bg-white border-b border-border/60 -mx-4 px-4 py-1.5 mb-4 flex flex-wrap items-center gap-0.5 relative">
+                {/* Headings */}
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                  className={`toolbar-btn ${editor.isActive("heading", { level: 2 }) ? "is-active" : ""}`}
+                  title="見出し2"
+                >
+                  H2
+                </button>
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                  className={`toolbar-btn ${editor.isActive("heading", { level: 3 }) ? "is-active" : ""}`}
+                  title="見出し3"
+                >
+                  H3
+                </button>
 
-                {/* Paywall marker button */}
+                <span className="toolbar-sep" />
+
+                {/* Formatting */}
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().toggleBold().run()}
+                  className={`toolbar-btn font-bold ${editor.isActive("bold") ? "is-active" : ""}`}
+                  title="太字"
+                >
+                  B
+                </button>
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().toggleItalic().run()}
+                  className={`toolbar-btn italic ${editor.isActive("italic") ? "is-active" : ""}`}
+                  title="斜体"
+                >
+                  I
+                </button>
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().toggleStrike().run()}
+                  className={`toolbar-btn line-through ${editor.isActive("strike") ? "is-active" : ""}`}
+                  title="取り消し線"
+                >
+                  S
+                </button>
+
+                <span className="toolbar-sep" />
+
+                {/* Lists */}
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().toggleBulletList().run()}
+                  className={`toolbar-btn ${editor.isActive("bulletList") ? "is-active" : ""}`}
+                  title="箇条書き"
+                >
+                  &bull;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                  className={`toolbar-btn ${editor.isActive("orderedList") ? "is-active" : ""}`}
+                  title="番号付き"
+                >
+                  1.
+                </button>
+
+                <span className="toolbar-sep" />
+
+                {/* Block */}
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                  className={`toolbar-btn ${editor.isActive("blockquote") ? "is-active" : ""}`}
+                  title="引用"
+                >
+                  &gt;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().toggleCode().run()}
+                  className={`toolbar-btn font-mono text-xs ${editor.isActive("code") ? "is-active" : ""}`}
+                  title="インラインコード"
+                >
+                  &lt;/&gt;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLangMenuOpen(!langMenuOpen)}
+                  className={`toolbar-btn ${editor.isActive("codeBlock") ? "is-active" : ""}`}
+                  title="コードブロック"
+                >
+                  {"{ }"}
+                </button>
+
+                <span className="toolbar-sep" />
+
+                {/* Insert */}
+                <button type="button" onClick={setLink} className={`toolbar-btn ${editor.isActive("link") ? "is-active" : ""}`} title="リンク">
+                  🔗
+                </button>
+                <button type="button" onClick={addImage} className="toolbar-btn" title="画像">
+                  🖼
+                </button>
+                <button type="button" onClick={addYoutube} className="toolbar-btn" title="YouTube">
+                  ▶
+                </button>
+
+                <span className="toolbar-sep" />
+
+                {/* Color */}
+                <button
+                  type="button"
+                  onClick={() => setColorMenuOpen(!colorMenuOpen)}
+                  className="toolbar-btn"
+                  title="文字色"
+                >
+                  <span className="bg-gradient-to-r from-red-500 via-blue-500 to-green-500 bg-clip-text text-transparent font-bold">A</span>
+                </button>
+
+                {/* Separator */}
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().setHorizontalRule().run()}
+                  className="toolbar-btn"
+                  title="区切り線"
+                >
+                  ―
+                </button>
+
+                {/* Paywall */}
                 <div className="ml-auto">
                   <button
                     type="button"
-                    title="有料エリアの開始位置を挿入"
-                    onClick={() => insertBlock("<!-- paywall -->")}
-                    className="px-3 py-1 text-sm rounded bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300 font-medium transition-colors"
+                    onClick={() => editor.commands.setPaywallDivider()}
+                    className="px-3 py-1 text-xs rounded bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300 font-medium transition-colors"
+                    title="有料エリアの開始位置"
                   >
                     ここから有料
                   </button>
@@ -437,23 +486,31 @@ export function ArticleEditor({
                         <button
                           key={c.value}
                           type="button"
-                          onClick={() => insertColor(c.value)}
+                          onClick={() => setColor(c.value)}
                           className={`w-7 h-7 rounded-full ${c.bg} hover:scale-110 transition-transform ring-2 ring-transparent hover:ring-offset-2 hover:ring-gray-300`}
                           title={c.label}
                         />
                       ))}
+                      <button
+                        type="button"
+                        onClick={unsetColor}
+                        className="w-7 h-7 rounded-full bg-gray-200 hover:scale-110 transition-transform flex items-center justify-center text-xs"
+                        title="色をリセット"
+                      >
+                        ✕
+                      </button>
                     </div>
                     <button
                       type="button"
                       onClick={() => setColorMenuOpen(false)}
                       className="mt-2 text-xs text-muted-foreground hover:text-foreground"
                     >
-                      キャンセル
+                      閉じる
                     </button>
                   </div>
                 )}
 
-                {/* Language selection dropdown for code blocks */}
+                {/* Language picker for code blocks */}
                 {langMenuOpen && (
                   <div className="absolute top-full left-0 right-0 bg-white border border-border rounded-lg shadow-lg mt-1 p-2 z-50">
                     <p className="text-xs text-muted-foreground mb-2 px-1">言語を選択</p>
@@ -470,10 +527,7 @@ export function ArticleEditor({
                       ))}
                       <button
                         type="button"
-                        onClick={() => {
-                          insertBlock("```\n\n```");
-                          setLangMenuOpen(false);
-                        }}
+                        onClick={() => insertCodeBlock("")}
                         className="px-2 py-1 text-xs rounded bg-muted hover:bg-primary/10 hover:text-primary transition-colors"
                       >
                         なし
@@ -490,31 +544,11 @@ export function ArticleEditor({
                 )}
               </div>
 
-              <div className="relative">
-                {/* Color highlight overlay (behind textarea) */}
-                {hasColorSpans && (
-                  <div
-                    ref={overlayRef}
-                    className="absolute inset-0 whitespace-pre-wrap break-words text-base leading-[1.9] text-foreground pointer-events-none overflow-hidden"
-                    style={{ wordBreak: "break-word" }}
-                    aria-hidden="true"
-                  >
-                    {renderHighlightedContent(content)}
-                  </div>
-                )}
-                <textarea
-                  ref={textareaRef}
-                  required
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  onScroll={syncScroll}
-                  placeholder="ここに本文を書く（Markdown対応）..."
-                  className={`w-full text-base leading-[1.9] border-none outline-none bg-transparent resize-none placeholder:text-muted-foreground/50 min-h-[calc(100vh-16rem)] ${
-                    hasColorSpans ? "text-transparent caret-black" : ""
-                  }`}
-                  style={hasColorSpans ? { caretColor: "var(--foreground)" } : undefined}
-                />
-              </div>
+              {/* Tiptap Editor */}
+              <EditorContent
+                editor={editor}
+                className="min-h-[calc(100vh-16rem)]"
+              />
             </>
           ) : (
             /* Preview tab */
@@ -522,7 +556,9 @@ export function ArticleEditor({
               {content ? (
                 <ArticleBody content={content} />
               ) : (
-                <p className="text-muted-foreground">プレビューする内容がありません</p>
+                <p className="text-muted-foreground">
+                  プレビューする内容がありません
+                </p>
               )}
             </div>
           )}
