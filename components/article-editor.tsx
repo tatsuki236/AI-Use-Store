@@ -50,6 +50,7 @@ export function ArticleEditor({
 }: ArticleEditorProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [price, setPrice] = useState(article?.price ?? 0);
   const [thumbnailUrl, setThumbnailUrl] = useState(
@@ -120,6 +121,48 @@ export function ArticleEditor({
     },
     [content]
   );
+
+  const syncScroll = useCallback(() => {
+    if (overlayRef.current && textareaRef.current) {
+      overlayRef.current.scrollTop = textareaRef.current.scrollTop;
+      overlayRef.current.scrollLeft = textareaRef.current.scrollLeft;
+    }
+  }, []);
+
+  /** Render content with color spans visually highlighted */
+  function renderHighlightedContent(text: string) {
+    const regex = /(<span style="color:(#[0-9a-fA-F]+)">)([\s\S]*?)(<\/span>)/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+    let key = 0;
+
+    while ((match = regex.exec(text)) !== null) {
+      // Normal text before this span
+      if (match.index > lastIndex) {
+        parts.push(<span key={key++}>{text.slice(lastIndex, match.index)}</span>);
+      }
+      const color = match[2];
+      // Opening tag — dimmed
+      parts.push(<span key={key++} className="opacity-30">{match[1]}</span>);
+      // Colored inner text
+      parts.push(<span key={key++} style={{ color }}>{match[3]}</span>);
+      // Closing tag — dimmed
+      parts.push(<span key={key++} className="opacity-30">{match[4]}</span>);
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Remaining text
+    if (lastIndex < text.length) {
+      parts.push(<span key={key++}>{text.slice(lastIndex)}</span>);
+    }
+    // Extra newline to match textarea trailing behavior
+    parts.push(<br key={key++} />);
+    return parts;
+  }
+
+  const hasColorSpans = /<span style="color:#[0-9a-fA-F]+">/.test(content);
 
   const toolbarButtons = [
     {
@@ -447,14 +490,31 @@ export function ArticleEditor({
                 )}
               </div>
 
-              <textarea
-                ref={textareaRef}
-                required
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="ここに本文を書く（Markdown対応）..."
-                className="w-full text-base leading-[1.9] border-none outline-none bg-transparent resize-none placeholder:text-muted-foreground/50 min-h-[calc(100vh-16rem)]"
-              />
+              <div className="relative">
+                {/* Color highlight overlay (behind textarea) */}
+                {hasColorSpans && (
+                  <div
+                    ref={overlayRef}
+                    className="absolute inset-0 whitespace-pre-wrap break-words text-base leading-[1.9] text-foreground pointer-events-none overflow-hidden"
+                    style={{ wordBreak: "break-word" }}
+                    aria-hidden="true"
+                  >
+                    {renderHighlightedContent(content)}
+                  </div>
+                )}
+                <textarea
+                  ref={textareaRef}
+                  required
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  onScroll={syncScroll}
+                  placeholder="ここに本文を書く（Markdown対応）..."
+                  className={`w-full text-base leading-[1.9] border-none outline-none bg-transparent resize-none placeholder:text-muted-foreground/50 min-h-[calc(100vh-16rem)] ${
+                    hasColorSpans ? "text-transparent caret-black" : ""
+                  }`}
+                  style={hasColorSpans ? { caretColor: "var(--foreground)" } : undefined}
+                />
+              </div>
             </>
           ) : (
             /* Preview tab */
