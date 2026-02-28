@@ -123,52 +123,70 @@ export default async function HomePage() {
       <Header />
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-background">
+      <section className="relative overflow-hidden bg-background min-h-[420px] sm:min-h-[480px]">
         <HeroGlow />
-        <div className="container mx-auto max-w-6xl px-4 py-16 sm:py-24 relative">
-          <div className="max-w-2xl">
+        <div className="container mx-auto max-w-6xl px-4 py-20 sm:py-28 relative">
+          {/* Badge */}
+          <div
+            className="hero-fade-up mb-6"
+            style={{ animation: "hero-fade-up 0.6s ease-out both" }}
+          >
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/8 border border-primary/15 px-4 py-1.5 text-xs font-medium text-primary backdrop-blur-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              AI特化型ナレッジプラットフォーム
+            </span>
+          </div>
+
+          <div className="max-w-3xl">
             <h1
-              className="hero-fade-up text-4xl sm:text-5xl font-black tracking-tight leading-[1.15]"
-              style={{ animation: "hero-fade-up 0.7s ease-out both" }}
+              className="hero-fade-up text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1]"
+              style={{ animation: "hero-fade-up 0.7s ease-out 0.1s both" }}
             >
               学びを、もっと
-              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">自由</span>に。
+              <br className="sm:hidden" />
+              <span className="bg-gradient-to-r from-primary via-primary/85 to-violet-500 bg-clip-text text-transparent">自由</span>に。
             </h1>
             <p
-              className="hero-fade-up mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed"
-              style={{ animation: "hero-fade-up 0.7s ease-out 0.15s both" }}
+              className="hero-fade-up mt-5 text-base sm:text-lg lg:text-xl text-muted-foreground leading-relaxed max-w-xl"
+              style={{ animation: "hero-fade-up 0.7s ease-out 0.2s both" }}
             >
-              AIスキルを、実践的な教材で学べる<br className="hidden sm:inline" />
-              AI特化型ナレッジプラットフォーム
+              AIスキルを、実践的な教材で学べる。
+              <br className="hidden sm:inline" />
+              あなたのペースで、プロのスキルを。
             </p>
             <div
-              className="hero-fade-up mt-7 flex gap-3"
-              style={{ animation: "hero-fade-up 0.7s ease-out 0.3s both" }}
+              className="hero-fade-up mt-8 flex flex-wrap items-center gap-3"
+              style={{ animation: "hero-fade-up 0.7s ease-out 0.35s both" }}
             >
               <Link href="/signup">
-                <Button className="h-11 rounded-full px-8 shadow-lg shadow-primary/20 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/25 transition-all duration-200">
+                <Button className="h-12 rounded-full px-9 text-base shadow-lg shadow-primary/25 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200">
                   無料で始める
+                </Button>
+              </Link>
+              <Link href="/search?q=">
+                <Button variant="outline" className="h-12 rounded-full px-8 text-base bg-white/50 backdrop-blur-sm border-border/60 hover:-translate-y-0.5 transition-all duration-200">
+                  教材を探す
                 </Button>
               </Link>
             </div>
           </div>
 
-          {/* Trust Signals - Glassmorphism */}
+          {/* Trust Signals — Glassmorphic cards */}
           <div
-            className="hero-fade-up mt-12 flex flex-wrap gap-4 sm:gap-6"
-            style={{ animation: "hero-fade-up 0.7s ease-out 0.45s both" }}
+            className="hero-fade-up mt-14 grid grid-cols-3 gap-3 sm:gap-5 max-w-lg"
+            style={{ animation: "hero-fade-up 0.7s ease-out 0.5s both" }}
           >
-            <div className="flex items-center gap-2.5 rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/80 dark:border-white/10 px-5 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-              <span className="text-2xl sm:text-3xl font-extrabold text-primary">{heroStats?.article_count?.toLocaleString() ?? "0"}</span>
-              <span className="text-xs sm:text-sm text-muted-foreground leading-tight">公開中の<br />コンテンツ</span>
+            <div className="group rounded-2xl bg-white/65 dark:bg-white/5 backdrop-blur-2xl border border-white/80 dark:border-white/10 px-4 py-4 sm:px-5 sm:py-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center">
+              <span className="block text-2xl sm:text-3xl font-extrabold text-primary leading-none">{heroStats?.article_count?.toLocaleString() ?? "0"}</span>
+              <span className="block mt-1.5 text-[11px] sm:text-xs text-muted-foreground font-medium">公開コンテンツ</span>
             </div>
-            <div className="flex items-center gap-2.5 rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/80 dark:border-white/10 px-5 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-              <span className="text-2xl sm:text-3xl font-extrabold text-primary">{heroStats?.user_count?.toLocaleString() ?? "0"}</span>
-              <span className="text-xs sm:text-sm text-muted-foreground leading-tight">登録<br />ユーザー</span>
+            <div className="group rounded-2xl bg-white/65 dark:bg-white/5 backdrop-blur-2xl border border-white/80 dark:border-white/10 px-4 py-4 sm:px-5 sm:py-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center">
+              <span className="block text-2xl sm:text-3xl font-extrabold text-primary leading-none">{heroStats?.user_count?.toLocaleString() ?? "0"}</span>
+              <span className="block mt-1.5 text-[11px] sm:text-xs text-muted-foreground font-medium">登録ユーザー</span>
             </div>
-            <div className="flex items-center gap-2.5 rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/80 dark:border-white/10 px-5 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-              <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600">{heroStats?.satisfaction_percent != null ? `${heroStats.satisfaction_percent}%` : "--%"}</span>
-              <span className="text-xs sm:text-sm text-muted-foreground leading-tight">学習<br />満足度</span>
+            <div className="group rounded-2xl bg-white/65 dark:bg-white/5 backdrop-blur-2xl border border-white/80 dark:border-white/10 px-4 py-4 sm:px-5 sm:py-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center">
+              <span className="block text-2xl sm:text-3xl font-extrabold text-emerald-600 leading-none">{heroStats?.satisfaction_percent != null ? `${heroStats.satisfaction_percent}%` : "--%"}</span>
+              <span className="block mt-1.5 text-[11px] sm:text-xs text-muted-foreground font-medium">学習満足度</span>
             </div>
           </div>
         </div>

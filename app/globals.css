@@ -369,3 +369,13 @@
   border-radius: 0.5rem;
   margin: 1.5rem 0;
 }
+
+/* YouTube embed responsive container */
+.article-content iframe {
+  border: none;
+}
+
+/* Color highlight text — allow inline styles from spans */
+.article-content span[style] {
+  font-weight: inherit;
+}

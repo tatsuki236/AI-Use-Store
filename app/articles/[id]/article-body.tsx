@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import rehypeRaw from "rehype-raw";
 
 function CopyButton({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
@@ -37,12 +38,56 @@ function extractText(node: React.ReactNode): string {
   return "";
 }
 
+function extractYouTubeId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+/** Transform ::youtube[URL] directives into <div data-youtube="VIDEO_ID"> before markdown parsing */
+function preprocessContent(content: string): string {
+  return content.replace(
+    /::youtube\[([^\]]+)\]/g,
+    (_match, url: string) => {
+      const videoId = extractYouTubeId(url.trim());
+      if (videoId) {
+        return `<div data-youtube="${videoId}"></div>`;
+      }
+      return _match;
+    }
+  );
+}
+
+function YouTubeEmbed({ videoId }: { videoId: string }) {
+  return (
+    <div className="my-6 rounded-xl overflow-hidden shadow-md">
+      <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+        <iframe
+          className="absolute top-0 left-0 w-full h-full"
+          src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+          title="YouTube video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    </div>
+  );
+}
+
 export function ArticleBody({ content }: { content: string }) {
+  const processed = preprocessContent(content);
+
   return (
     <div className="article-content">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight]}
+        rehypePlugins={[rehypeRaw, rehypeHighlight]}
         components={{
           pre({ children, ...props }) {
             const code = extractText(children);
@@ -53,9 +98,16 @@ export function ArticleBody({ content }: { content: string }) {
               </div>
             );
           },
+          div({ node, children, ...props }) {
+            const youtubeId = (node?.properties?.dataYoutube as string) ?? null;
+            if (youtubeId) {
+              return <YouTubeEmbed videoId={youtubeId} />;
+            }
+            return <div {...props}>{children}</div>;
+          },
         }}
       >
-        {content}
+        {processed}
       </ReactMarkdown>
     </div>
   );

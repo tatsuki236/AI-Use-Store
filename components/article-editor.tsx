@@ -59,6 +59,7 @@ export function ArticleEditor({
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
   const [content, setContent] = useState(article?.content ?? "");
   const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [colorMenuOpen, setColorMenuOpen] = useState(false);
 
   function handleSubmit(actionType: "draft" | "submit") {
     if (!formRef.current) return;
@@ -156,6 +157,21 @@ export function ArticleEditor({
       ],
     },
     {
+      group: "rich",
+      items: [
+        {
+          label: "A",
+          title: "文字色",
+          action: () => setColorMenuOpen(true),
+          colorBtn: true,
+        },
+        { label: "▶", title: "YouTube埋め込み", action: () => {
+          const url = prompt("YouTube URLを入力してください");
+          if (url) insertBlock(`::youtube[${url}]`);
+        }},
+      ],
+    },
+    {
       group: "insert",
       items: [
         { label: "🔗", title: "リンク", action: () => insertMarkdown("[", "](url)") },
@@ -164,6 +180,22 @@ export function ArticleEditor({
       ],
     },
   ];
+
+  const TEXT_COLORS = [
+    { label: "赤", value: "#ef4444", bg: "bg-red-500" },
+    { label: "青", value: "#3b82f6", bg: "bg-blue-500" },
+    { label: "緑", value: "#22c55e", bg: "bg-green-500" },
+    { label: "紫", value: "#a855f7", bg: "bg-purple-500" },
+    { label: "オレンジ", value: "#f97316", bg: "bg-orange-500" },
+    { label: "ピンク", value: "#ec4899", bg: "bg-pink-500" },
+    { label: "黄", value: "#eab308", bg: "bg-yellow-500" },
+    { label: "シアン", value: "#06b6d4", bg: "bg-cyan-500" },
+  ];
+
+  const insertColor = (color: string) => {
+    insertMarkdown(`<span style="color:${color}">`, "</span>");
+    setColorMenuOpen(false);
+  };
 
   const insertCodeBlock = (lang: string) => {
     insertBlock("```" + lang + "\n\n```");
@@ -277,6 +309,8 @@ export function ArticleEditor({
                           "italic" in btn && btn.italic ? "italic" : ""
                         } ${
                           "strike" in btn && btn.strike ? "line-through" : ""
+                        } ${
+                          "colorBtn" in btn && btn.colorBtn ? "bg-gradient-to-r from-red-500 via-blue-500 to-green-500 bg-clip-text text-transparent font-bold" : ""
                         }`}
                       >
                         {btn.label}
@@ -296,6 +330,31 @@ export function ArticleEditor({
                     ここから有料
                   </button>
                 </div>
+
+                {/* Color picker dropdown */}
+                {colorMenuOpen && (
+                  <div className="absolute top-full left-0 right-0 bg-white border border-border rounded-lg shadow-lg mt-1 p-3 z-50">
+                    <p className="text-xs text-muted-foreground mb-2">文字色を選択</p>
+                    <div className="flex flex-wrap gap-2">
+                      {TEXT_COLORS.map((c) => (
+                        <button
+                          key={c.value}
+                          type="button"
+                          onClick={() => insertColor(c.value)}
+                          className={`w-7 h-7 rounded-full ${c.bg} hover:scale-110 transition-transform ring-2 ring-transparent hover:ring-offset-2 hover:ring-gray-300`}
+                          title={c.label}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setColorMenuOpen(false)}
+                      className="mt-2 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                )}
 
                 {/* Language selection dropdown for code blocks */}
                 {langMenuOpen && (
