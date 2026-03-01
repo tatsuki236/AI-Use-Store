@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ApproveButton } from "./approve-button";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -29,39 +28,41 @@ export default async function AdminPage() {
     `)
     .order("created_at", { ascending: false });
 
-  const pendingCount = purchases?.filter((p) => p.status === "pending").length ?? 0;
+  // Fetch Stripe payment data
+  const { data: stripePayments } = await supabase
+    .from("stripe_payments")
+    .select("id, amount, platform_fee, seller_amount, status, created_at, stripe_session_id, article_id")
+    .order("created_at", { ascending: false });
 
-  // Calculate sales stats from completed purchases
-  const completedPurchases = purchases?.filter((p) => p.status === "completed") ?? [];
-  const totalSales = completedPurchases.reduce((sum, p) => {
-    const article = p.articles as unknown as { title: string; price: number; author_id: string } | null;
-    const course = p.courses as unknown as { title: string; price: number } | null;
-    const price = p.article_id ? (article?.price ?? 0) : (course?.price ?? 0);
-    return sum + price;
-  }, 0);
-
-  const platformRevenue = Math.floor(totalSales * 0.20);
-  const sellerPayouts = totalSales - platformRevenue;
-  const totalTransactions = completedPurchases.length;
+  // Calculate stats from Stripe payments (completed)
+  const completedStripePayments = stripePayments?.filter((p) => p.status === "completed") ?? [];
+  const totalSales = completedStripePayments.reduce((sum, p) => sum + p.amount, 0);
+  const platformRevenue = completedStripePayments.reduce((sum, p) => sum + p.platform_fee, 0);
+  const sellerPayouts = completedStripePayments.reduce((sum, p) => sum + p.seller_amount, 0);
+  const totalTransactions = completedStripePayments.length;
 
   // Monthly sales (current month)
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  const monthlySales = completedPurchases
+  const monthlySales = completedStripePayments
     .filter((p) => p.created_at >= monthStart)
-    .reduce((sum, p) => {
-      const article = p.articles as unknown as { price: number } | null;
-      const course = p.courses as unknown as { price: number } | null;
-      const price = p.article_id ? (article?.price ?? 0) : (course?.price ?? 0);
-      return sum + price;
-    }, 0);
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  // Fallback: if no Stripe data, calculate from purchases as before
+  const fallbackTotal = totalSales === 0
+    ? (purchases?.filter((p) => p.status === "completed") ?? []).reduce((sum, p) => {
+        const article = p.articles as unknown as { price: number } | null;
+        const course = p.courses as unknown as { price: number } | null;
+        return sum + (p.article_id ? (article?.price ?? 0) : (course?.price ?? 0));
+      }, 0)
+    : totalSales;
 
   return (
     <div>
       <div className="mb-8">
         <h1 className="text-2xl font-bold">売上レポート</h1>
         <p className="text-muted-foreground mt-1">
-          プラットフォーム全体の売上と収益を確認
+          Stripe決済データに基づくプラットフォーム全体の売上と収益
         </p>
       </div>
 
@@ -69,17 +70,17 @@ export default async function AdminPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-card border rounded-xl p-4 sm:p-5">
           <p className="text-xs text-muted-foreground mb-1">総売上</p>
-          <p className="text-2xl font-bold">¥{totalSales.toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground mt-1">{totalTransactions}件の取引</p>
+          <p className="text-2xl font-bold">¥{(totalSales || fallbackTotal).toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mt-1">{totalTransactions || purchases?.filter(p => p.status === "completed").length || 0}件の取引</p>
         </div>
         <div className="bg-card border rounded-xl p-4 sm:p-5">
           <p className="text-xs text-muted-foreground mb-1">プラットフォーム収益 (20%)</p>
-          <p className="text-2xl font-bold text-primary">¥{platformRevenue.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-primary">¥{(platformRevenue || Math.floor(fallbackTotal * 0.20)).toLocaleString()}</p>
           <p className="text-xs text-muted-foreground mt-1">手数料 15% + 決済 5%</p>
         </div>
         <div className="bg-card border rounded-xl p-4 sm:p-5">
           <p className="text-xs text-muted-foreground mb-1">出品者への支払い</p>
-          <p className="text-2xl font-bold text-emerald-600">¥{sellerPayouts.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-emerald-600">¥{(sellerPayouts || fallbackTotal - Math.floor(fallbackTotal * 0.20)).toLocaleString()}</p>
           <p className="text-xs text-muted-foreground mt-1">売上の80%</p>
         </div>
         <div className="bg-card border rounded-xl p-4 sm:p-5">
@@ -91,19 +92,57 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      {/* Purchase Management */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold">購入管理</h2>
-        {pendingCount > 0 && (
-          <Badge variant="destructive" className="text-sm px-3 py-1">
-            未承認: {pendingCount}件
-          </Badge>
-        )}
-      </div>
+      {/* Stripe Payments Table */}
+      {completedStripePayments.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-bold mb-4">Stripe決済履歴</h2>
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>セッションID</TableHead>
+                  <TableHead>金額</TableHead>
+                  <TableHead>手数料</TableHead>
+                  <TableHead>出品者分</TableHead>
+                  <TableHead>日時</TableHead>
+                  <TableHead>ステータス</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(stripePayments ?? []).slice(0, 20).map((payment) => (
+                  <TableRow key={payment.id}>
+                    <TableCell className="font-mono text-xs">
+                      {payment.stripe_session_id.slice(0, 20)}...
+                    </TableCell>
+                    <TableCell>¥{payment.amount.toLocaleString()}</TableCell>
+                    <TableCell>¥{payment.platform_fee.toLocaleString()}</TableCell>
+                    <TableCell>¥{payment.seller_amount.toLocaleString()}</TableCell>
+                    <TableCell>
+                      {new Date(payment.created_at).toLocaleDateString("ja-JP")}
+                    </TableCell>
+                    <TableCell>
+                      {payment.status === "completed" ? (
+                        <Badge variant="default">完了</Badge>
+                      ) : payment.status === "failed" ? (
+                        <Badge variant="destructive">失敗</Badge>
+                      ) : (
+                        <Badge variant="outline">{payment.status}</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+
+      {/* Purchase History */}
+      <h2 className="text-lg font-bold mb-4">購入履歴</h2>
 
       {!purchases || purchases.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          購入リクエストはまだありません
+          購入データはまだありません
         </div>
       ) : (
         <div className="border rounded-lg">
@@ -116,7 +155,6 @@ export default async function AdminPage() {
                 <TableHead>価格</TableHead>
                 <TableHead>日時</TableHead>
                 <TableHead>ステータス</TableHead>
-                <TableHead className="text-right">アクション</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -143,20 +181,12 @@ export default async function AdminPage() {
                       {new Date(purchase.created_at).toLocaleDateString("ja-JP")}
                     </TableCell>
                     <TableCell>
-                      {purchase.status === "pending" ? (
-                        <Badge variant="outline" className="text-yellow-600 border-yellow-600">
-                          未承認
-                        </Badge>
+                      {purchase.status === "completed" ? (
+                        <Badge variant="default">完了</Badge>
                       ) : (
-                        <Badge variant="default">承認済み</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {purchase.status === "pending" && (
-                        <ApproveButton
-                          purchaseId={purchase.id}
-                          userId={purchase.user_id}
-                        />
+                        <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                          処理中
+                        </Badge>
                       )}
                     </TableCell>
                   </TableRow>

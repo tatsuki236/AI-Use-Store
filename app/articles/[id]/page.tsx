@@ -5,8 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StarRating } from "@/components/star-rating";
+import { PaywallOverlay } from "@/components/paywall-overlay";
 import { ArticleBody } from "./article-body";
-import { PurchaseButton } from "./purchase-button";
 import { ReviewForm } from "./review-form";
 import { ReviewList } from "./review-list";
 
@@ -26,6 +27,7 @@ export async function generateMetadata({
   if (!article) return { title: "教材が見つかりません" };
 
   const description = article.content
+    .replace(/<[^>]*>/g, " ")
     .replace(/[#*>`\-\n|]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
@@ -39,13 +41,13 @@ export async function generateMetadata({
 }
 
 function getArticleIcon(title: string): string {
-  if (title.includes("AI") || title.includes("ChatGPT")) return "🤖";
-  if (title.includes("Python") || title.includes("機械学習")) return "🐍";
-  if (title.includes("Next") || title.includes("React")) return "⚛️";
-  if (title.includes("デザイン") || title.includes("UI")) return "🎨";
-  if (title.includes("Git")) return "🌿";
-  if (title.includes("TypeScript") || title.includes("型")) return "📘";
-  return "📝";
+  if (title.includes("AI") || title.includes("ChatGPT")) return "\u{1F916}";
+  if (title.includes("Python") || title.includes("機械学習")) return "\u{1F40D}";
+  if (title.includes("Next") || title.includes("React")) return "\u269B\uFE0F";
+  if (title.includes("デザイン") || title.includes("UI")) return "\u{1F3A8}";
+  if (title.includes("Git")) return "\u{1F33F}";
+  if (title.includes("TypeScript") || title.includes("型")) return "\u{1F4D8}";
+  return "\u{1F4DD}";
 }
 
 function getThumbnailColor(title: string): string {
@@ -75,12 +77,33 @@ function getPreviewContent(content: string): string {
   }
   // Fallback: first 3 paragraphs (Markdown) or first portion (HTML)
   if (/<(?:p|h[1-6]|div)\b/i.test(content)) {
-    // HTML: take first ~500 chars worth of tags
     const parts = content.split(/<\/(?:p|h[1-6])>/i);
     return parts.slice(0, 3).join("</p>") + "</p>";
   }
   const paragraphs = content.split(/\n\n+/);
   return paragraphs.slice(0, 3).join("\n\n");
+}
+
+function getBlurPreviewContent(content: string): string {
+  // Get content after paywall for blurred preview
+  if (content.includes("data-paywall")) {
+    const parts = content.split(/<div[^>]*data-paywall[^>]*>[\s\S]*?<\/div>/);
+    if (parts.length > 1) {
+      // Take first 2-3 paragraphs after paywall
+      const afterPaywall = parts[1].trim();
+      const paragraphs = afterPaywall.split(/<\/(?:p|h[1-6])>/i);
+      return paragraphs.slice(0, 3).join("</p>") + "</p>";
+    }
+  }
+  if (content.includes("<!-- paywall -->")) {
+    const parts = content.split("<!-- paywall -->");
+    if (parts.length > 1) {
+      const afterPaywall = parts[1].trim();
+      const paragraphs = afterPaywall.split(/\n\n+/);
+      return paragraphs.slice(0, 3).join("\n\n");
+    }
+  }
+  return "";
 }
 
 function getFullContent(content: string): string {
@@ -138,6 +161,8 @@ export default async function ArticlePage({
     ? (reviews ?? []).find((r) => r.user_id === user.id) ?? null
     : null;
 
+  const blurPreview = !hasAccess ? getBlurPreviewContent(article.content) : "";
+
   return (
     <div className="min-h-screen bg-muted/30">
       <Header />
@@ -172,10 +197,19 @@ export default async function ArticlePage({
                   ¥{article.price?.toLocaleString()}
                 </Badge>
               )}
+              {(article.purchase_count ?? 0) > 0 && (
+                <span className="text-xs text-muted-foreground">{article.purchase_count}件購入</span>
+              )}
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold leading-tight tracking-tight">
               {article.title}
             </h1>
+            <div className="mt-3 flex items-center gap-3">
+              <StarRating rating={article.rating ?? 0} size="md" />
+              {(article.review_count ?? 0) > 0 && (
+                <span className="text-xs text-muted-foreground">({article.review_count}件のレビュー)</span>
+              )}
+            </div>
             <div className="mt-4 flex items-center gap-3 text-sm text-muted-foreground">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
                 A
@@ -203,52 +237,28 @@ export default async function ArticlePage({
             </div>
           ) : (
             <>
-              {/* Preview with fade-out */}
-              <div className="px-6 sm:px-10 relative">
+              {/* Preview content */}
+              <div className="px-6 sm:px-10">
                 <ArticleBody content={getPreviewContent(article.content)} />
-                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-card to-transparent" />
               </div>
 
-              {/* Purchase Section */}
-              <div className="px-6 sm:px-10 pb-10 pt-6">
-                <div className="border border-border/60 rounded-xl p-6 text-center bg-muted/30">
-                  {isPending ? (
-                    <>
-                      <Badge variant="outline" className="text-yellow-600 border-yellow-600 mb-3 text-sm px-4 py-1">
-                        承認待ち
-                      </Badge>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        購入リクエストは管理者に送信されました。承認されると全文をお読みいただけます。
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-lg font-bold mb-1">
-                        この教材を購入して全文を読む
-                      </p>
-                      <p className="text-3xl font-extrabold text-primary mb-4">
-                        ¥{article.price?.toLocaleString()}
-                      </p>
-                      {user ? (
-                        <div className="max-w-xs mx-auto">
-                          <PurchaseButton articleId={article.id} />
-                        </div>
-                      ) : (
-                        <div className="max-w-xs mx-auto space-y-2">
-                          <Link href="/login" className="block">
-                            <Button className="w-full">ログインして購入</Button>
-                          </Link>
-                          <p className="text-xs text-muted-foreground">
-                            アカウントをお持ちでない方は
-                            <Link href="/signup" className="text-primary hover:underline ml-1">
-                              新規登録
-                            </Link>
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  )}
+              {/* Blurred preview of paid content */}
+              {blurPreview && (
+                <div className="px-6 sm:px-10 relative select-none" aria-hidden="true">
+                  <div className="blur-sm opacity-50 pointer-events-none">
+                    <ArticleBody content={blurPreview} />
+                  </div>
                 </div>
+              )}
+
+              {/* Paywall Overlay */}
+              <div className="px-6 sm:px-10 pb-10">
+                <PaywallOverlay
+                  price={article.price ?? 0}
+                  articleId={article.id}
+                  isLoggedIn={!!user}
+                  isPending={isPending}
+                />
               </div>
             </>
           )}

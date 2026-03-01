@@ -378,6 +378,132 @@ as $$
 $$;
 
 -- ============================================
+-- 非正規化カラム (purchase_count, review_count)
+-- ============================================
+alter table public.articles add column if not exists purchase_count integer not null default 0;
+alter table public.articles add column if not exists review_count integer not null default 0;
+
+-- 9. stripe_payments テーブル
+create table if not exists public.stripe_payments (
+  id uuid primary key default gen_random_uuid(),
+  purchase_id uuid references public.purchases(id) on delete set null,
+  user_id uuid references auth.users(id) on delete set null not null,
+  article_id uuid references public.articles(id) on delete set null not null,
+  stripe_session_id text unique not null,
+  stripe_payment_intent text,
+  amount integer not null,
+  platform_fee integer not null default 0,
+  seller_amount integer not null default 0,
+  currency text not null default 'jpy',
+  status text not null default 'pending'
+    check (status in ('pending', 'completed', 'failed', 'refunded')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.stripe_payments enable row level security;
+
+create policy "Admins can manage all stripe_payments"
+  on public.stripe_payments for all
+  using (public.is_admin());
+
+create policy "Users can view own stripe_payments"
+  on public.stripe_payments for select
+  using (auth.uid() = user_id);
+
+-- 10. banners テーブル
+create table if not exists public.banners (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  image_url text not null,
+  link_url text,
+  is_active boolean not null default true,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+alter table public.banners enable row level security;
+
+create policy "Anyone can view active banners"
+  on public.banners for select
+  using (is_active = true);
+
+create policy "Admins can manage banners"
+  on public.banners for all
+  using (public.is_admin());
+
+-- ============================================
+-- purchase_count / review_count 自動更新トリガー
+-- ============================================
+
+-- purchase_count 更新
+create or replace function public.update_article_purchase_count()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  target_article_id uuid;
+begin
+  if tg_op = 'DELETE' then
+    target_article_id := OLD.article_id;
+  else
+    target_article_id := NEW.article_id;
+  end if;
+
+  if target_article_id is not null then
+    update public.articles
+    set purchase_count = (
+      select count(*) from public.purchases p
+      where p.article_id = target_article_id and p.status = 'completed'
+    )
+    where id = target_article_id;
+  end if;
+
+  if tg_op = 'DELETE' then return OLD; end if;
+  return NEW;
+end;
+$$;
+
+create trigger trg_update_article_purchase_count
+  after insert or update or delete on public.purchases
+  for each row
+  execute function public.update_article_purchase_count();
+
+-- review_count 更新
+create or replace function public.update_article_review_count()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  target_article_id uuid;
+begin
+  if tg_op = 'DELETE' then
+    target_article_id := OLD.article_id;
+  else
+    target_article_id := NEW.article_id;
+  end if;
+
+  update public.articles
+  set review_count = (
+    select count(*) from public.reviews r
+    where r.article_id = target_article_id
+  )
+  where id = target_article_id;
+
+  if tg_op = 'DELETE' then return OLD; end if;
+  return NEW;
+end;
+$$;
+
+create trigger trg_update_article_review_count
+  after insert or update or delete on public.reviews
+  for each row
+  execute function public.update_article_review_count();
+
+-- ============================================
 -- ストレージバケット
 -- ============================================
 -- Supabase Dashboard > Storage から以下を作成:
