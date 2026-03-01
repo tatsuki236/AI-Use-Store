@@ -81,6 +81,11 @@ export async function Header() {
             </>
           ) : (
             <>
+              <Link href="/seller/register">
+                <Button variant="ghost" size="sm" className="text-xs">
+                  出品する
+                </Button>
+              </Link>
               <Link href="/login">
                 <Button variant="ghost" size="sm">
                   ログイン
@@ -113,15 +118,16 @@ export async function Header() {
             </span>
           </Link>
 
-          {/* Create Article */}
+          {/* Create Article / 出品 */}
           <Link
-            href={user ? (sellerStatus === "approved" ? "/sell/new" : "/seller/register") : "/login"}
-            className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted/60 transition-colors"
-            aria-label="記事を作成"
+            href={user ? (sellerStatus === "approved" ? "/sell/new" : "/seller/register") : "/seller/register"}
+            className="flex-shrink-0 h-7 px-2.5 flex items-center gap-1 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+            aria-label="出品する"
           >
-            <svg className="w-[22px] h-[22px] text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+            <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
+            <span className="text-xs font-semibold text-primary">出品</span>
           </Link>
 
           {/* Login / Avatar */}
