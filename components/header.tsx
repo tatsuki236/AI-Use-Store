@@ -12,6 +12,7 @@ export async function Header() {
 
   let isAdmin = false;
   let sellerStatus: string | null = null;
+  let cartCount = 0;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -26,6 +27,12 @@ export async function Header() {
       .eq("user_id", user.id)
       .single();
     sellerStatus = seller?.status ?? null;
+
+    const { count } = await supabase
+      .from("purchases")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id);
+    cartCount = count ?? 0;
   }
 
   return (
@@ -91,8 +98,8 @@ export async function Header() {
 
       {/* ===== Mobile Header (Amazon-style) ===== */}
       <div className="sm:hidden relative">
-        {/* Row 1: Menu | Logo | Login | Cart */}
-        <div className="flex items-center h-12 px-3 gap-2">
+        {/* Row 1: Menu | Logo | Create | Login | Cart */}
+        <div className="flex items-center h-12 px-3 gap-1.5">
           {/* Hamburger menu */}
           <MobileMenuButton isAdmin={isAdmin} isLoggedIn={!!user} sellerStatus={sellerStatus} />
 
@@ -106,30 +113,50 @@ export async function Header() {
             </span>
           </Link>
 
+          {/* Create Article */}
+          <Link
+            href={user ? (sellerStatus === "approved" ? "/sell/new" : "/seller/register") : "/login"}
+            className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted/60 transition-colors"
+            aria-label="記事を作成"
+          >
+            <svg className="w-[22px] h-[22px] text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </Link>
+
           {/* Login / Avatar */}
           {user ? (
-            <Link href="/admin" className="flex-shrink-0">
+            <Link href="/account" className="flex-shrink-0">
               <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-secondary-foreground">
                 {user.email?.charAt(0).toUpperCase()}
               </div>
             </Link>
           ) : (
-            <Link href="/login" className="flex-shrink-0">
-              <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+            <Link href="/login" className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+              <svg className="w-[22px] h-[22px] text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
               </svg>
             </Link>
           )}
 
-          {/* Cart (placeholder) */}
-          <button className="flex-shrink-0 relative">
-            <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          {/* Cart */}
+          <Link
+            href={user ? "/purchases" : "/login"}
+            className="flex-shrink-0 w-8 h-8 flex items-center justify-center relative"
+            aria-label="購入履歴"
+          >
+            <svg className="w-[22px] h-[22px] text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
             </svg>
-          </button>
+            {cartCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-bold leading-none px-1">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
+          </Link>
         </div>
 
-        {/* Row 2: Search bar */}
+        {/* Row 2: Amazon-style search bar */}
         <div className="px-3 pb-2.5">
           <SearchBox />
         </div>

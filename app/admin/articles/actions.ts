@@ -16,6 +16,7 @@ async function requireAdmin() {
 
 export async function createArticle(formData: FormData) {
   const supabase = await requireAdmin();
+  const { data: { user } } = await supabase.auth.getUser();
   const title = formData.get("title") as string;
   const content = formData.get("content") as string;
   const price = parseInt(formData.get("price") as string) || 0;
@@ -27,7 +28,7 @@ export async function createArticle(formData: FormData) {
   const status = published ? "published" : "draft";
   const { error } = await supabase
     .from("articles")
-    .insert({ title, content, price: is_free ? 0 : price, rating, is_free, published, thumbnail_url, status });
+    .insert({ title, content, price: is_free ? 0 : price, rating, is_free, published, thumbnail_url, status, author_id: user!.id });
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin/articles");
@@ -47,7 +48,7 @@ export async function updateArticle(articleId: string, formData: FormData) {
   const status = published ? "published" : "draft";
   const { error } = await supabase
     .from("articles")
-    .update({ title, content, price: is_free ? 0 : price, rating, is_free, published, thumbnail_url, status })
+    .update({ title, content, price: is_free ? 0 : price, rating, is_free, published, thumbnail_url, status, updated_at: new Date().toISOString() })
     .eq("id", articleId);
 
   if (error) throw new Error(error.message);

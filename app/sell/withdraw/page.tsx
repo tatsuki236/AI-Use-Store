@@ -59,7 +59,7 @@ export default async function WithdrawPage() {
   const { data: myArticles } = await supabase
     .from("articles")
     .select("id, price")
-    .eq("user_id", user.id);
+    .eq("author_id", user.id);
 
   let grossSales = 0;
   if (myArticles && myArticles.length > 0) {

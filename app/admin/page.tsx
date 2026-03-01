@@ -25,7 +25,7 @@ export default async function AdminPage() {
       article_id,
       profiles:user_id (email),
       courses:course_id (title, price),
-      articles:article_id (title, price, user_id)
+      articles:article_id (title, price, author_id)
     `)
     .order("created_at", { ascending: false });
 
@@ -34,7 +34,7 @@ export default async function AdminPage() {
   // Calculate sales stats from completed purchases
   const completedPurchases = purchases?.filter((p) => p.status === "completed") ?? [];
   const totalSales = completedPurchases.reduce((sum, p) => {
-    const article = p.articles as unknown as { title: string; price: number; user_id: string } | null;
+    const article = p.articles as unknown as { title: string; price: number; author_id: string } | null;
     const course = p.courses as unknown as { title: string; price: number } | null;
     const price = p.article_id ? (article?.price ?? 0) : (course?.price ?? 0);
     return sum + price;
@@ -123,7 +123,7 @@ export default async function AdminPage() {
               {purchases.map((purchase) => {
                 const profile = purchase.profiles as unknown as { email: string } | null;
                 const course = purchase.courses as unknown as { title: string; price: number } | null;
-                const article = purchase.articles as unknown as { title: string; price: number; user_id: string } | null;
+                const article = purchase.articles as unknown as { title: string; price: number; author_id: string } | null;
                 const isArticle = purchase.article_id != null;
                 const itemTitle = isArticle ? article?.title : course?.title;
                 const itemPrice = isArticle ? article?.price : course?.price;

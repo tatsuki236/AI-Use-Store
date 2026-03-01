@@ -37,7 +37,7 @@ export default async function AccountPage() {
     const { data: myArticles } = await supabase
       .from("articles")
       .select("id, price")
-      .eq("user_id", user.id);
+      .eq("author_id", user.id);
 
     if (myArticles && myArticles.length > 0) {
       const articleIds = myArticles.map((a) => a.id);
