@@ -36,11 +36,15 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) {
       setError(error.message);
       setLoading(false);
+    } else if (data.session) {
+      // セッションが返ってきた = そのままログイン済み
+      router.push("/");
     } else {
+      // メール確認が必要な場合のフォールバック
       setSuccess(true);
       setLoading(false);
     }
