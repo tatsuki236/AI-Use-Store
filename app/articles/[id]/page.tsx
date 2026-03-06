@@ -124,14 +124,20 @@ export default async function ArticlePage({
 
   const { data: article } = await supabase
     .from("articles")
-    .select("*, profiles:author_id(display_name, email, avatar_url)")
+    .select("*")
     .eq("id", id)
     .eq("published", true)
     .single();
 
   if (!article) notFound();
 
-  const authorProfile = article.profiles as { display_name: string | null; email: string | null; avatar_url: string | null } | null;
+  // Fetch author profile separately (author_id references auth.users, not profiles directly)
+  const { data: authorProfile } = await supabase
+    .from("profiles")
+    .select("display_name, email, avatar_url")
+    .eq("id", article.author_id)
+    .single();
+
   const authorName = authorProfile?.display_name || authorProfile?.email?.split("@")[0] || "ユーザー";
   const authorInitial = authorName.charAt(0).toUpperCase();
 
