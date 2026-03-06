@@ -68,7 +68,7 @@ export default async function SellDashboardPage() {
           <div>
             <h1 className="text-xl sm:text-2xl font-bold">出品ダッシュボード</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              あなたの教材を管理できます
+              あなたの記事を管理できます
             </p>
           </div>
           <div className="flex gap-2">
@@ -78,7 +78,7 @@ export default async function SellDashboardPage() {
               </Button>
             </Link>
             <Link href="/sell/new">
-              <Button size="sm" className="sm:size-default">新規教材作成</Button>
+              <Button size="sm" className="sm:size-default">新規記事作成</Button>
             </Link>
           </div>
         </div>
@@ -86,10 +86,10 @@ export default async function SellDashboardPage() {
         {!articles || articles.length === 0 ? (
           <div className="bg-card border rounded-xl p-8 sm:p-12 text-center">
             <p className="text-muted-foreground mb-4">
-              まだ教材がありません
+              まだ記事がありません
             </p>
             <Link href="/sell/new">
-              <Button>最初の教材を作成する</Button>
+              <Button>最初の記事を作成する</Button>
             </Link>
           </div>
         ) : (
@@ -116,15 +116,26 @@ export default async function SellDashboardPage() {
                     </span>
                   </div>
                 </div>
-                {/* Action */}
-                {(article.status === "draft" ||
-                  article.status === "rejected") && (
-                  <Link href={`/sell/${article.id}/edit`} className="flex-shrink-0">
-                    <Button size="sm" variant="outline" className="w-full sm:w-auto">
-                      編集
-                    </Button>
-                  </Link>
-                )}
+                {/* Actions */}
+                <div className="flex gap-2 flex-shrink-0">
+                  {(article.status === "draft" ||
+                    article.status === "rejected") && (
+                    <Link href={`/sell/${article.id}/edit`}>
+                      <Button size="sm" variant="outline" className="w-full sm:w-auto">
+                        編集
+                      </Button>
+                    </Link>
+                  )}
+                  {article.status === "published" && (
+                    <>
+                      <Link href={`/sell/${article.id}/metadata`}>
+                        <Button size="sm" variant="outline" className="w-full sm:w-auto">
+                          設定変更
+                        </Button>
+                      </Link>
+                    </>
+                  )}
+                </div>
               </div>
             ))}
           </div>

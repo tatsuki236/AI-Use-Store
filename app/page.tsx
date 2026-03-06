@@ -7,6 +7,7 @@ import { StarRating } from "@/components/star-rating";
 import { ArticleGrid } from "@/components/article-grid";
 import { ArticleFilters } from "@/components/article-filters";
 import { BannerCarousel } from "@/components/banner-carousel";
+import { HorizontalScroll } from "@/components/horizontal-scroll";
 import { getGradient, getTag, tagColors, isNew, getExcerpt } from "@/lib/article-utils";
 import type { ArticleCardData } from "@/components/article-card";
 
@@ -23,18 +24,19 @@ export default async function HomePage({
 }) {
   const params = await searchParams;
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const hasFilters = params.category || params.price || (params.sort && params.sort !== "newest");
 
   // Build filtered query
   let query = supabase
     .from("articles")
-    .select("id, title, content, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count")
+    .select("id, title, content, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count, category")
     .eq("published", true);
 
   // Category filter
   if (params.category) {
-    query = query.ilike("title", `%${params.category}%`);
+    query = query.eq("category", params.category);
   }
 
   // Price filter
@@ -66,7 +68,7 @@ export default async function HomePage({
   // Trending: top by purchase_count
   const { data: trending } = await supabase
     .from("articles")
-    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count")
+    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count")
     .eq("published", true)
     .order("purchase_count", { ascending: false })
     .order("rating", { ascending: false })
@@ -76,7 +78,7 @@ export default async function HomePage({
   const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
   const { data: newArrivals } = await supabase
     .from("articles")
-    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count")
+    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count")
     .eq("published", true)
     .gte("created_at", twoWeeksAgo)
     .order("created_at", { ascending: false })
@@ -85,10 +87,10 @@ export default async function HomePage({
   // Ranking (top 5 by rating)
   const { data: ranked } = await supabase
     .from("articles")
-    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count")
+    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count")
     .eq("published", true)
     .order("rating", { ascending: false })
-    .limit(5);
+    .limit(10);
 
   // Hero stats
   const { data: heroStats } = await supabase.rpc("get_hero_stats");
@@ -115,7 +117,7 @@ export default async function HomePage({
       )}
 
       {/* Hero (compact when filters active) */}
-      {!hasFilters && <AiHero heroStats={heroStats} />}
+      {!hasFilters && <AiHero heroStats={heroStats} isLoggedIn={!!user} />}
 
       {/* Main Content */}
       <div className="container mx-auto max-w-6xl px-4 py-8">
@@ -126,7 +128,7 @@ export default async function HomePage({
               <span className="text-amber-500">&#9733;</span>
               人気ランキング
             </h2>
-            <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-2" style={{ scrollSnapType: "x mandatory" }}>
+            <HorizontalScroll>
               {ranked.map((article, i) => {
                 const medals = ["bg-amber-400 text-white", "bg-gray-300 text-white", "bg-amber-600 text-white"];
                 const medalStyle = i < 3 ? medals[i] : "bg-muted text-muted-foreground";
@@ -169,7 +171,7 @@ export default async function HomePage({
                   </Link>
                 );
               })}
-            </div>
+            </HorizontalScroll>
           </section>
         )}
 
@@ -275,7 +277,7 @@ export default async function HomePage({
         {/* Filters + All Articles Grid */}
         <section className="mb-10">
           <h2 className="text-lg font-bold mb-4">
-            {hasFilters ? "検索結果" : "すべての教材"}
+            {hasFilters ? "検索結果" : "すべての記事"}
           </h2>
           <Suspense fallback={null}>
             <ArticleFilters />
@@ -298,7 +300,7 @@ export default async function HomePage({
                 <span className="font-bold text-base">AiUseStore</span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                AIスキルを、実践的な教材で学べるAI特化型ナレッジプラットフォーム。
+                AIスキルを、実践的な記事で学べるAI特化型ナレッジプラットフォーム。
               </p>
             </div>
             <div>
@@ -315,7 +317,7 @@ export default async function HomePage({
             <div>
               <h4 className="text-sm font-semibold mb-3">サービス</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/" className="hover:text-foreground transition-colors">教材一覧</Link></li>
+                <li><Link href="/" className="hover:text-foreground transition-colors">記事一覧</Link></li>
                 <li><Link href="/signup" className="hover:text-foreground transition-colors">新規登録</Link></li>
                 <li><Link href="/login" className="hover:text-foreground transition-colors">ログイン</Link></li>
               </ul>
@@ -336,7 +338,7 @@ export default async function HomePage({
               &copy; {new Date().getFullYear()} AiUseStore. All rights reserved.
             </p>
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <span>AI教材プラットフォーム</span>
+              <span>AI記事プラットフォーム</span>
             </div>
           </div>
         </div>

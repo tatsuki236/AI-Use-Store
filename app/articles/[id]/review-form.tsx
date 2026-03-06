@@ -103,7 +103,7 @@ export function ReviewForm({ articleId, existingReview }: ReviewFormProps) {
         <Textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="この教材の感想を書いてください..."
+          placeholder="この記事の感想を書いてください..."
           rows={3}
           maxLength={1000}
         />

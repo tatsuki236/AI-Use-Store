@@ -4,7 +4,7 @@ export function ArticleGrid({ articles }: { articles: ArticleCardData[] }) {
   if (articles.length === 0) {
     return (
       <div className="text-center py-16 text-muted-foreground">
-        該当する教材が見つかりませんでした
+        該当する記事が見つかりませんでした
       </div>
     );
   }

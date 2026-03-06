@@ -119,12 +119,26 @@ const CODE_LANGUAGES = [
   "bash", "json", "sql", "go", "rust", "java",
 ];
 
+async function uploadImage(file: File): Promise<string | null> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch("/api/upload", { method: "POST", body: formData });
+  const data = await res.json();
+  if (!res.ok) {
+    alert(data.error || "アップロードに失敗しました");
+    return null;
+  }
+  return data.url;
+}
+
 export function ArticleEditor({
   formAction,
   article,
   rejectionNotice,
 }: ArticleEditorProps) {
   const formRef = useRef<HTMLFormElement>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const bodyImageInputRef = useRef<HTMLInputElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [price, setPrice] = useState(article?.price ?? 0);
   const [thumbnailUrl, setThumbnailUrl] = useState(
@@ -135,6 +149,7 @@ export function ArticleEditor({
   const [content, setContent] = useState("");
   const [colorMenuOpen, setColorMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // Prepare initial content
   const initialContent = article?.content
@@ -209,12 +224,44 @@ export function ArticleEditor({
   }, [editor]);
 
   const addImage = useCallback(() => {
-    if (!editor) return;
-    const url = window.prompt("画像URLを入力");
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
-  }, [editor]);
+    bodyImageInputRef.current?.click();
+  }, []);
+
+  const handleBodyImageUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !editor) return;
+      setUploading(true);
+      try {
+        const url = await uploadImage(file);
+        if (url) {
+          editor.chain().focus().setImage({ src: url }).run();
+        }
+      } finally {
+        setUploading(false);
+        e.target.value = "";
+      }
+    },
+    [editor]
+  );
+
+  const handleThumbnailUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setUploading(true);
+      try {
+        const url = await uploadImage(file);
+        if (url) {
+          setThumbnailUrl(url);
+        }
+      } finally {
+        setUploading(false);
+        e.target.value = "";
+      }
+    },
+    []
+  );
 
   const addYoutube = useCallback(() => {
     if (!editor) return;
@@ -436,8 +483,8 @@ export function ArticleEditor({
                 <button type="button" onClick={setLink} className={`toolbar-btn ${editor.isActive("link") ? "is-active" : ""}`} title="リンク">
                   🔗
                 </button>
-                <button type="button" onClick={addImage} className="toolbar-btn" title="画像">
-                  🖼
+                <button type="button" onClick={addImage} className="toolbar-btn" title="画像" disabled={uploading}>
+                  {uploading ? "..." : "🖼"}
                 </button>
                 <button type="button" onClick={addYoutube} className="toolbar-btn" title="YouTube">
                   ▶
@@ -583,7 +630,7 @@ export function ArticleEditor({
                 onChange={(e) => setIsFree(e.target.checked)}
                 className="rounded border-border"
               />
-              無料教材
+              無料記事
             </label>
 
             {!isFree && (
@@ -600,13 +647,46 @@ export function ArticleEditor({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="dialog-thumbnail">サムネイルURL</Label>
+              <Label>サムネイル画像</Label>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploading}
+                  onClick={() => thumbnailInputRef.current?.click()}
+                >
+                  {uploading ? "アップロード中..." : "画像を選択"}
+                </Button>
+                {thumbnailUrl && (
+                  <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                    設定済み
+                  </span>
+                )}
+              </div>
+              {thumbnailUrl && (
+                <div className="mt-2 relative">
+                  <img
+                    src={thumbnailUrl}
+                    alt="サムネイルプレビュー"
+                    className="w-full max-h-40 object-cover rounded-lg border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setThumbnailUrl("")}
+                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-black/80"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
               <Input
                 id="dialog-thumbnail"
                 type="url"
-                placeholder="https://..."
+                placeholder="または URLを直接入力..."
                 value={thumbnailUrl}
                 onChange={(e) => setThumbnailUrl(e.target.value)}
+                className="text-xs"
               />
             </div>
           </div>
@@ -624,6 +704,22 @@ export function ArticleEditor({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Hidden file inputs for image upload */}
+      <input
+        ref={thumbnailInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+        onChange={handleThumbnailUpload}
+      />
+      <input
+        ref={bodyImageInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+        onChange={handleBodyImageUpload}
+      />
     </form>
   );
 }

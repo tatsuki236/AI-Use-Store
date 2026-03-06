@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -34,7 +35,10 @@ export async function approveArticle(articleId: string) {
   if (error) throw new Error("承認に失敗しました: " + error.message);
 
   revalidatePath("/admin/review");
+  revalidatePath("/admin/articles");
+  revalidatePath("/sell");
   revalidatePath("/");
+  redirect("/admin/review");
 }
 
 export async function rejectArticle(articleId: string, reason: string) {
@@ -53,4 +57,7 @@ export async function rejectArticle(articleId: string, reason: string) {
   if (error) throw new Error("却下に失敗しました: " + error.message);
 
   revalidatePath("/admin/review");
+  revalidatePath("/admin/articles");
+  revalidatePath("/sell");
+  redirect("/admin/review");
 }

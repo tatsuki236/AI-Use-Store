@@ -76,7 +76,7 @@ export default async function SellerRegisterPage() {
           <div className="space-y-6">
             <div className="bg-card border rounded-xl p-6">
               <p className="text-muted-foreground">
-                教材を出品するには、出品者登録が必要です。
+                記事を出品するには、出品者登録が必要です。
                 以下の情報を入力して申請してください。
                 管理者による審査後、出品が可能になります。
               </p>

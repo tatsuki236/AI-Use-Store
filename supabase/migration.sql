@@ -8,6 +8,7 @@ create table if not exists public.profiles (
   email text unique not null,
   role text not null default 'user' check (role in ('admin', 'user')),
   is_approved boolean not null default false,
+  display_name text,
   created_at timestamptz not null default now()
 );
 
@@ -158,17 +159,13 @@ $$;
 -- ============================================
 
 -- profiles
-create policy "Users can view own profile"
+create policy "Anyone can view public profile fields"
   on public.profiles for select
-  using (auth.uid() = id);
+  using (true);
 
 create policy "Users can update own profile"
   on public.profiles for update
   using (auth.uid() = id);
-
-create policy "Admins can view all profiles"
-  on public.profiles for select
-  using (public.is_admin());
 
 create policy "Admins can update all profiles"
   on public.profiles for update
@@ -502,6 +499,73 @@ create trigger trg_update_article_review_count
   after insert or update or delete on public.reviews
   for each row
   execute function public.update_article_review_count();
+
+-- ============================================
+-- 11. likes テーブル
+-- ============================================
+create table if not exists public.likes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  article_id uuid not null references public.articles(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (user_id, article_id)
+);
+
+create index if not exists idx_likes_article_id on public.likes(article_id);
+create index if not exists idx_likes_user_id on public.likes(user_id);
+
+alter table public.articles add column if not exists like_count integer not null default 0;
+alter table public.articles add column if not exists category text;
+
+alter table public.likes enable row level security;
+
+create policy "Anyone can view likes"
+  on public.likes for select
+  using (true);
+
+create policy "Users can insert own likes"
+  on public.likes for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can delete own likes"
+  on public.likes for delete
+  using (auth.uid() = user_id);
+
+create policy "Admins can manage all likes"
+  on public.likes for all
+  using (public.is_admin());
+
+-- like_count 自動更新トリガー
+create or replace function public.update_article_like_count()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  target_article_id uuid;
+begin
+  if tg_op = 'DELETE' then
+    target_article_id := OLD.article_id;
+  else
+    target_article_id := NEW.article_id;
+  end if;
+
+  update public.articles
+  set like_count = (
+    select count(*) from public.likes l
+    where l.article_id = target_article_id
+  )
+  where id = target_article_id;
+
+  if tg_op = 'DELETE' then return OLD; end if;
+  return NEW;
+end;
+$$;
+
+create trigger trg_update_article_like_count
+  after insert or delete on public.likes
+  for each row
+  execute function public.update_article_like_count();
 
 -- ============================================
 -- ストレージバケット

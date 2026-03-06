@@ -26,7 +26,7 @@ export default function ContactPage() {
             <span className="text-2xl">💬</span>
             <p className="mt-2 text-sm font-semibold">一般的なご質問</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              サービスや教材について
+              サービスや記事について
             </p>
           </div>
           <div className="bg-card rounded-xl border border-border/60 p-5 text-center">

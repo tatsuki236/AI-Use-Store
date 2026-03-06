@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { StarRating } from "@/components/star-rating";
-import { getGradient, getTag, isNew, getExcerpt } from "@/lib/article-utils";
+import { getGradient, getTag, isNew, getExcerpt, getCharCount, tagColors } from "@/lib/article-utils";
 
 export type ArticleCardData = {
   id: string;
@@ -13,10 +13,14 @@ export type ArticleCardData = {
   created_at: string;
   purchase_count?: number;
   review_count?: number;
+  like_count?: number;
+  category?: string;
 };
 
 export function ArticleCard({ article }: { article: ArticleCardData }) {
-  const tag = getTag(article.title);
+  const tag = article.category && tagColors[article.category]
+    ? { label: article.category, color: tagColors[article.category] }
+    : getTag(article.title);
   const isNewArticle = isNew(article.created_at);
   const isPopular = (article.purchase_count ?? 0) >= 5;
 
@@ -76,6 +80,14 @@ export function ArticleCard({ article }: { article: ArticleCardData }) {
                 ({article.review_count})
               </span>
             )}
+            {(article.like_count ?? 0) > 0 && (
+              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                <svg className="w-3 h-3 text-rose-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                </svg>
+                {article.like_count}
+              </span>
+            )}
           </div>
           <div className="mt-auto pt-2 flex items-center justify-between">
             {article.is_free ? (
@@ -83,11 +95,14 @@ export function ArticleCard({ article }: { article: ArticleCardData }) {
             ) : (
               <span className="text-sm font-bold text-primary">¥{article.price?.toLocaleString()}</span>
             )}
-            {(article.purchase_count ?? 0) > 0 && (
-              <span className="text-[10px] text-muted-foreground">
-                {article.purchase_count}件購入
-              </span>
-            )}
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+              {article.content && (
+                <span>{getCharCount(article.content).toLocaleString()}字</span>
+              )}
+              {(article.purchase_count ?? 0) > 0 && (
+                <span>{article.purchase_count}件購入</span>
+              )}
+            </span>
           </div>
         </div>
       </article>

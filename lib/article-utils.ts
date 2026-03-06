@@ -52,3 +52,11 @@ export function getExcerpt(content: string, maxLength = 90): string {
     .trim()
     .slice(0, maxLength);
 }
+
+export function getCharCount(content: string): number {
+  return content
+    .replace(/<[^>]*>/g, "")
+    .replace(/[#*>`\-|]/g, "")
+    .replace(/\s+/g, "")
+    .length;
+}

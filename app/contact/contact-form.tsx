@@ -84,7 +84,7 @@ export function ContactForm() {
           >
             <option value="">選択してください</option>
             <option value="サービスについて">サービスについて</option>
-            <option value="教材について">教材について</option>
+            <option value="記事について">記事について</option>
             <option value="お支払いについて">お支払いについて</option>
             <option value="アカウントについて">アカウントについて</option>
             <option value="不具合の報告">不具合の報告</option>

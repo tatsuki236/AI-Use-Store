@@ -4,6 +4,8 @@ import { Header } from "@/components/header";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AvatarUploader } from "./avatar-uploader";
+import { DisplayNameEditor } from "./display-name-editor";
 
 export default async function AccountPage() {
   const supabase = await createClient();
@@ -15,7 +17,7 @@ export default async function AccountPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("email, role")
+    .select("email, role, avatar_url, display_name")
     .eq("id", user.id)
     .single();
 
@@ -87,6 +89,19 @@ export default async function AccountPage() {
         <h1 className="text-xl sm:text-2xl font-bold mb-6">アカウント</h1>
 
         <div className="space-y-4">
+          {/* Avatar */}
+          <div className="bg-card border rounded-xl p-4 sm:p-5">
+            <AvatarUploader
+              currentUrl={profile?.avatar_url ?? null}
+              email={profile?.email ?? user.email ?? "?"}
+            />
+          </div>
+
+          {/* Display Name */}
+          <div className="bg-card border rounded-xl p-4 sm:p-5">
+            <DisplayNameEditor currentName={profile?.display_name ?? ""} />
+          </div>
+
           {/* Email */}
           <div className="bg-card border rounded-xl p-4 sm:p-5">
             <p className="text-xs text-muted-foreground mb-1">メールアドレス</p>
@@ -172,11 +187,11 @@ export default async function AccountPage() {
 
               {/* Actions */}
               <div className="flex gap-2 mt-4 pt-3 border-t">
-                <Link href="/sell/withdraw">
-                  <Button size="sm">出金申請</Button>
-                </Link>
                 <Link href="/sell">
-                  <Button size="sm" variant="outline">教材管理</Button>
+                  <Button size="sm">記事管理</Button>
+                </Link>
+                <Link href="/sell/withdraw">
+                  <Button size="sm" variant="outline">出金申請</Button>
                 </Link>
               </div>
             </div>

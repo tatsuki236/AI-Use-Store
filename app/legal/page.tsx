@@ -13,7 +13,7 @@ const legalInfo = [
     extra: "（またはお問い合わせフォーム）",
     extraHref: "/contact",
   },
-  { label: "販売価格", value: "各教材ページに記載の価格（税込）", icon: "💰" },
+  { label: "販売価格", value: "各記事ページに記載の価格（税込）", icon: "💰" },
   { label: "追加費用", value: "なし（通信料等はお客様負担）", icon: "📝" },
   { label: "支払方法", value: "クレジットカード（Stripe決済）", icon: "💳" },
   { label: "支払時期", value: "購入手続き完了時に即時決済", icon: "🕐" },

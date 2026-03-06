@@ -57,7 +57,7 @@ export function MobileMenuButton({
                 トップ
               </Link>
               <Link href="/search" onClick={close} className={linkClass}>
-                教材を探す
+                記事を探す
               </Link>
               {isLoggedIn && (
                 <Link

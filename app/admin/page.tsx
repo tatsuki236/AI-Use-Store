@@ -12,7 +12,7 @@ import {
 export default async function AdminPage() {
   const supabase = await createClient();
 
-  // Fetch all purchases with user, course, and article info
+  // Fetch all purchases with user and article info
   const { data: purchases } = await supabase
     .from("purchases")
     .select(`
@@ -20,10 +20,8 @@ export default async function AdminPage() {
       status,
       created_at,
       user_id,
-      course_id,
       article_id,
       profiles:user_id (email),
-      courses:course_id (title, price),
       articles:article_id (title, price, author_id)
     `)
     .order("created_at", { ascending: false });
@@ -52,8 +50,7 @@ export default async function AdminPage() {
   const fallbackTotal = totalSales === 0
     ? (purchases?.filter((p) => p.status === "completed") ?? []).reduce((sum, p) => {
         const article = p.articles as unknown as { price: number } | null;
-        const course = p.courses as unknown as { price: number } | null;
-        return sum + (p.article_id ? (article?.price ?? 0) : (course?.price ?? 0));
+        return sum + (article?.price ?? 0);
       }, 0)
     : totalSales;
 
@@ -150,7 +147,6 @@ export default async function AdminPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>ユーザー</TableHead>
-                <TableHead>種別</TableHead>
                 <TableHead>購入内容</TableHead>
                 <TableHead>価格</TableHead>
                 <TableHead>日時</TableHead>
@@ -160,23 +156,14 @@ export default async function AdminPage() {
             <TableBody>
               {purchases.map((purchase) => {
                 const profile = purchase.profiles as unknown as { email: string } | null;
-                const course = purchase.courses as unknown as { title: string; price: number } | null;
                 const article = purchase.articles as unknown as { title: string; price: number; author_id: string } | null;
-                const isArticle = purchase.article_id != null;
-                const itemTitle = isArticle ? article?.title : course?.title;
-                const itemPrice = isArticle ? article?.price : course?.price;
                 return (
                   <TableRow key={purchase.id}>
                     <TableCell className="font-medium">
                       {profile?.email ?? "不明"}
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={isArticle ? "text-blue-600 border-blue-300" : "text-purple-600 border-purple-300"}>
-                        {isArticle ? "教材" : "コース"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{itemTitle ?? "不明"}</TableCell>
-                    <TableCell>¥{itemPrice?.toLocaleString() ?? 0}</TableCell>
+                    <TableCell>{article?.title ?? "不明"}</TableCell>
+                    <TableCell>¥{article?.price?.toLocaleString() ?? 0}</TableCell>
                     <TableCell>
                       {new Date(purchase.created_at).toLocaleDateString("ja-JP")}
                     </TableCell>

@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { categorizeArticle } from "@/lib/categorize";
 
 async function requireApprovedSeller() {
   const supabase = await createClient();
@@ -35,6 +36,7 @@ export async function createUserArticle(formData: FormData) {
   const action = formData.get("action") as string;
 
   const status = action === "submit" ? "pending_review" : "draft";
+  const category = await categorizeArticle(title, content);
 
   const { error } = await supabase.from("articles").insert({
     title,
@@ -46,6 +48,7 @@ export async function createUserArticle(formData: FormData) {
     author_id: user.id,
     status,
     rating: 0,
+    category,
   });
 
   if (error) throw new Error("記事の作成に失敗しました: " + error.message);

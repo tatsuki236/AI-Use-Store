@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { isInAppBrowser } from "@/lib/detect-inapp-browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,9 +19,9 @@ const GoogleIcon = () => (
 );
 
 const benefits = [
-  { icon: "📚", title: "500+の教材", desc: "AI・プログラミングの実践教材" },
+  { icon: "📚", title: "500+の記事", desc: "AI・プログラミングの実践記事" },
   { icon: "🎯", title: "実践重視", desc: "すぐに使えるスキルが身につく" },
-  { icon: "🆓", title: "無料教材も充実", desc: "登録だけで読める教材多数" },
+  { icon: "🆓", title: "無料記事も充実", desc: "登録だけで読める記事多数" },
 ];
 
 export default function SignupPage() {
@@ -29,8 +30,13 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [inApp, setInApp] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    setInApp(isInAppBrowser());
+  }, []);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
@@ -108,7 +114,7 @@ export default function SignupPage() {
             <span className="text-primary">自由</span>に。
           </h1>
           <p className="mt-3 text-muted-foreground leading-relaxed">
-            AIスキルを、実践的な教材で学べる<br />
+            AIスキルを、実践的な記事で学べる<br />
             AI特化型ナレッジプラットフォーム
           </p>
 
@@ -145,39 +151,43 @@ export default function SignupPage() {
             無料アカウントを作成して学習を始めましょう
           </p>
 
-          {/* Section 1: Social Signup */}
-          <div className="mt-8">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-11 rounded-xl text-sm font-medium"
-              onClick={handleGoogleSignup}
-            >
-              <GoogleIcon />
-              <span className="ml-2">Googleで登録</span>
-            </Button>
-          </div>
+          {/* Section 1: Social Signup (通常ブラウザのみ) */}
+          {!inApp && (
+            <>
+              <div className="mt-8">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 rounded-xl text-sm font-medium"
+                  onClick={handleGoogleSignup}
+                >
+                  <GoogleIcon />
+                  <span className="ml-2">Googleで登録</span>
+                </Button>
+              </div>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-muted/30 px-3 text-xs text-muted-foreground">
-                またはメールで登録
-              </span>
-            </div>
-          </div>
+              {/* Divider */}
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-muted/30 px-3 text-xs text-muted-foreground">
+                    またはメールで登録
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Section 2: Email Signup */}
           {error && (
-            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg mb-4">
+            <div className={`text-sm text-destructive bg-destructive/10 p-3 rounded-lg mb-4 ${inApp ? "mt-8" : ""}`}>
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSignup} className="space-y-4">
+          <form onSubmit={handleSignup} className={`space-y-4 ${inApp && !error ? "mt-8" : ""}`}>
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-xs font-medium">
                 メールアドレス

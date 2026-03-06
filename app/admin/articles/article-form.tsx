@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,8 +23,34 @@ export function ArticleForm({ article }: { article?: Article }) {
     ? updateArticle.bind(null, article.id)
     : createArticle;
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState(article?.thumbnail_url ?? "");
+  const [uploading, setUploading] = useState(false);
+
+  async function handleThumbnailUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (res.ok) {
+        setThumbnailUrl(data.url);
+      } else {
+        alert(data.error || "アップロードに失敗しました");
+      }
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
   return (
     <form action={action} className="space-y-4">
+      <input type="hidden" name="thumbnail_url" value={thumbnailUrl} />
+
       <div className="space-y-2">
         <Label htmlFor="title">タイトル</Label>
         <Input
@@ -42,7 +69,7 @@ export function ArticleForm({ article }: { article?: Article }) {
           rows={16}
           required
           defaultValue={article?.content}
-          placeholder="Markdown形式で教材の内容を入力..."
+          placeholder="Markdown形式で記事の内容を入力..."
           className="font-mono text-sm"
         />
       </div>
@@ -70,13 +97,47 @@ export function ArticleForm({ article }: { article?: Article }) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="thumbnail_url">サムネイルURL</Label>
+          <Label>サムネイル画像</Label>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploading ? "アップロード中..." : "画像を選択"}
+            </Button>
+            {thumbnailUrl && (
+              <button
+                type="button"
+                onClick={() => setThumbnailUrl("")}
+                className="text-xs text-muted-foreground hover:text-destructive"
+              >
+                削除
+              </button>
+            )}
+          </div>
+          {thumbnailUrl && (
+            <img
+              src={thumbnailUrl}
+              alt="サムネイル"
+              className="mt-1 w-full max-h-32 object-cover rounded border"
+            />
+          )}
           <Input
-            id="thumbnail_url"
-            name="thumbnail_url"
             type="url"
-            defaultValue={article?.thumbnail_url ?? ""}
-            placeholder="https://..."
+            placeholder="または URLを直接入力..."
+            value={thumbnailUrl}
+            onChange={(e) => setThumbnailUrl(e.target.value)}
+            className="text-xs"
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={handleThumbnailUpload}
           />
         </div>
       </div>
@@ -88,7 +149,7 @@ export function ArticleForm({ article }: { article?: Article }) {
             defaultChecked={article?.is_free ?? true}
             className="rounded border-border"
           />
-          無料教材
+          無料記事
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input

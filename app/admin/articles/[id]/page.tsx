@@ -23,7 +23,7 @@ export default async function EditArticlePage({
     <div className="max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle>教材編集: {article.title}</CardTitle>
+          <CardTitle>記事編集: {article.title}</CardTitle>
         </CardHeader>
         <CardContent>
           <ArticleForm article={article} />

@@ -8,42 +8,40 @@ type HeroStats = {
   satisfaction_percent: number;
 } | null;
 
-export function AiHero({ heroStats }: { heroStats: HeroStats }) {
+export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLoggedIn?: boolean }) {
   return (
-    <section className="relative overflow-hidden min-h-[480px] sm:min-h-[560px] bg-black">
-      {/* Background image with Ken Burns effect */}
-      <div
-        className="absolute inset-0"
-        style={{ animation: "hero-ken-burns 30s ease-in-out infinite alternate" }}
-      >
-        <img
-          src="/images/hero-bg.png"
-          alt=""
-          className="w-full h-full object-cover"
-          aria-hidden="true"
-        />
-      </div>
+    <section className="relative overflow-hidden min-h-[600px] sm:min-h-[700px] lg:min-h-[85vh] flex items-center bg-black">
+      {/* Background video */}
+      <video
+        className="absolute inset-0 z-0 w-full h-full object-cover opacity-80"
+        src="/images/hero-bg.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        aria-hidden="true"
+      />
 
       {/* Dark overlay for text readability */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 z-0"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%)",
+            "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.8) 100%)",
         }}
       />
 
       {/* Vignette effect */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 z-0"
         style={{
           background:
-            "radial-gradient(ellipse 70% 60% at 50% 45%, transparent 40%, rgba(0,0,0,0.5) 100%)",
+            "radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.7) 100%)",
         }}
       />
 
       {/* Content */}
-      <div className="container mx-auto max-w-6xl px-4 py-20 sm:py-28 relative z-10">
+      <div className="container mx-auto max-w-6xl px-4 py-20 sm:py-32 relative z-10 w-full">
         {/* Eyebrow */}
         <div
           className="hero-fade-up mb-5"
@@ -74,7 +72,7 @@ export function AiHero({ heroStats }: { heroStats: HeroStats }) {
             className="hero-fade-up mt-5 text-base sm:text-lg text-gray-400 leading-relaxed max-w-xl"
             style={{ animation: "hero-fade-up 0.7s ease-out 0.2s both" }}
           >
-            AIスキルを、実践的な教材で学べる。
+            AIスキルを、実践的な記事で学べる。
             <br className="hidden sm:inline" />
             あなたのペースで、プロのスキルを。
           </p>
@@ -84,24 +82,38 @@ export function AiHero({ heroStats }: { heroStats: HeroStats }) {
             className="hero-fade-up mt-8 flex flex-wrap items-center gap-3"
             style={{ animation: "hero-fade-up 0.7s ease-out 0.35s both" }}
           >
+            {/* PC: 無料で始める + 記事を探す */}
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center h-12 rounded-full px-8 text-base font-semibold bg-white text-gray-900 shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(34,211,238,0.45)] transition-all duration-200"
+              className="hidden sm:inline-flex items-center justify-center h-12 rounded-full px-8 text-base font-semibold bg-white text-gray-900 shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(34,211,238,0.45)] transition-all duration-200"
             >
               無料で始める
             </Link>
             <Link
               href="/search?q="
-              className="inline-flex items-center justify-center h-12 rounded-full px-7 text-base font-medium text-white border border-white/30 backdrop-blur-sm hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-200"
+              className="hidden sm:inline-flex items-center justify-center h-12 rounded-full px-7 text-base font-medium text-white border border-white/30 backdrop-blur-sm hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-200"
             >
-              教材を探す
+              記事を探す
+            </Link>
+            {/* スマホ: 記事を探す + ログイン/記事投稿 */}
+            <Link
+              href="/search?q="
+              className="sm:hidden inline-flex items-center justify-center h-12 rounded-full px-8 text-base font-semibold bg-white text-gray-900 shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(34,211,238,0.45)] transition-all duration-200"
+            >
+              記事を探す
+            </Link>
+            <Link
+              href={isLoggedIn ? "/sell/new" : "/login"}
+              className="sm:hidden inline-flex items-center justify-center h-12 rounded-full px-7 text-base font-medium text-white border border-white/30 backdrop-blur-sm hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-200"
+            >
+              {isLoggedIn ? "記事投稿" : "ログイン"}
             </Link>
           </div>
         </div>
 
         {/* Trust Signals */}
         <div
-          className="hero-fade-up mt-14 grid grid-cols-3 gap-3 sm:gap-5 max-w-lg"
+          className="hero-fade-up mt-10 grid grid-cols-3 gap-3 sm:gap-5 max-w-lg"
           style={{ animation: "hero-fade-up 0.7s ease-out 0.5s both" }}
         >
           <div className="rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 px-4 py-4 sm:px-5 sm:py-5 hover:bg-white/10 hover:-translate-y-1 transition-all duration-300 text-center">

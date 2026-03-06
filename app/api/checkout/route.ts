@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
           currency: "jpy",
           product_data: {
             name: article.title,
-            description: "A-Note Academy 教材",
+            description: "A-Note Academy 記事",
           },
           unit_amount: article.price,
         },

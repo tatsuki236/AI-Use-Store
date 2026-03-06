@@ -10,6 +10,8 @@ import { PaywallOverlay } from "@/components/paywall-overlay";
 import { ArticleBody } from "./article-body";
 import { ReviewForm } from "./review-form";
 import { ReviewList } from "./review-list";
+import { LikeButton } from "./like-button";
+import { getCharCount } from "@/lib/article-utils";
 
 export async function generateMetadata({
   params,
@@ -24,7 +26,7 @@ export async function generateMetadata({
     .eq("id", id)
     .single();
 
-  if (!article) return { title: "教材が見つかりません" };
+  if (!article) return { title: "記事が見つかりません" };
 
   const description = article.content
     .replace(/<[^>]*>/g, " ")
@@ -122,12 +124,16 @@ export default async function ArticlePage({
 
   const { data: article } = await supabase
     .from("articles")
-    .select("*")
+    .select("*, profiles:author_id(display_name, email, avatar_url)")
     .eq("id", id)
     .eq("published", true)
     .single();
 
   if (!article) notFound();
+
+  const authorProfile = article.profiles as { display_name: string | null; email: string | null; avatar_url: string | null } | null;
+  const authorName = authorProfile?.display_name || authorProfile?.email?.split("@")[0] || "ユーザー";
+  const authorInitial = authorName.charAt(0).toUpperCase();
 
   // Check user login and purchase status
   const {
@@ -160,6 +166,20 @@ export default async function ArticlePage({
   const existingReview = user
     ? (reviews ?? []).find((r) => r.user_id === user.id) ?? null
     : null;
+
+  // Check if current user has liked
+  let hasLiked = false;
+  if (user) {
+    const { data: like } = await supabase
+      .from("likes")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("article_id", id)
+      .single();
+    hasLiked = !!like;
+  }
+
+  const charCount = getCharCount(article.content);
 
   const blurPreview = !hasAccess ? getBlurPreviewContent(article.content) : "";
 
@@ -209,20 +229,38 @@ export default async function ArticlePage({
               {(article.review_count ?? 0) > 0 && (
                 <span className="text-xs text-muted-foreground">({article.review_count}件のレビュー)</span>
               )}
+              <LikeButton
+                articleId={id}
+                initialLiked={hasLiked}
+                initialCount={article.like_count ?? 0}
+                isLoggedIn={!!user}
+              />
             </div>
             <div className="mt-4 flex items-center gap-3 text-sm text-muted-foreground">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                A
-              </div>
+              {authorProfile?.avatar_url ? (
+                <img
+                  src={authorProfile.avatar_url}
+                  alt=""
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                  {authorInitial}
+                </div>
+              )}
               <div>
-                <p className="text-foreground text-sm font-medium">AiUseStore</p>
-                <time className="text-xs">
-                  {new Date(article.created_at).toLocaleDateString("ja-JP", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </time>
+                <p className="text-foreground text-sm font-medium">{authorName}</p>
+                <div className="flex items-center gap-2 text-xs">
+                  <time>
+                    {new Date(article.created_at).toLocaleDateString("ja-JP", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </time>
+                  <span className="text-muted-foreground/50">|</span>
+                  <span>約{charCount.toLocaleString()}文字</span>
+                </div>
               </div>
             </div>
           </div>
@@ -286,7 +324,7 @@ export default async function ArticlePage({
         <div className="mt-8 flex flex-col items-center gap-4">
           <Link href="/">
             <Button variant="outline" className="rounded-full px-6">
-              ← 教材一覧に戻る
+              ← 記事一覧に戻る
             </Button>
           </Link>
         </div>

@@ -15,11 +15,18 @@ export default async function AdminReviewDetailPage({
 
   const { data: article } = await supabase
     .from("articles")
-    .select("*, profiles:author_id(email)")
+    .select("*")
     .eq("id", id)
     .single();
 
   if (!article) notFound();
+
+  // Fetch author profile
+  const { data: authorProfile } = await supabase
+    .from("profiles")
+    .select("email, display_name")
+    .eq("id", article.author_id)
+    .single();
 
   return (
     <div>
@@ -29,7 +36,7 @@ export default async function AdminReviewDetailPage({
             ← 一覧へ
           </Button>
         </Link>
-        <h1 className="text-xl sm:text-2xl font-bold">教材審査</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">記事審査</h1>
       </div>
 
       <div className="grid gap-4 sm:gap-6">
@@ -47,7 +54,7 @@ export default async function AdminReviewDetailPage({
           </div>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>
-              出品者: {((article as Record<string, unknown>).profiles as { email: string } | null)?.email ?? "-"}
+              出品者: {authorProfile?.display_name || "-"} ({authorProfile?.email ?? "-"})
             </p>
             <p>
               提出日:{" "}

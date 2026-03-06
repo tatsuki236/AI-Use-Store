@@ -56,6 +56,41 @@ export async function submitReview(
   revalidatePath("/");
 }
 
+export async function toggleLike(articleId: string) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("ログインが必要です");
+
+  // Check if already liked
+  const { data: existing } = await supabase
+    .from("likes")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("article_id", articleId)
+    .single();
+
+  if (existing) {
+    const { error } = await supabase
+      .from("likes")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("article_id", articleId);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase.from("likes").insert({
+      user_id: user.id,
+      article_id: articleId,
+    });
+    if (error) throw new Error(error.message);
+  }
+
+  revalidatePath(`/articles/${articleId}`);
+  revalidatePath("/");
+}
+
 export async function deleteReview(articleId: string) {
   const supabase = await createClient();
 

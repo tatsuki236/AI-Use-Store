@@ -16,22 +16,29 @@ export default async function AdminReviewPage() {
 
   const { data: articles } = await supabase
     .from("articles")
-    .select("id, title, price, is_free, status, created_at, author_id, profiles:author_id(email)")
+    .select("id, title, price, is_free, status, created_at, author_id")
     .eq("status", "pending_review")
     .order("created_at", { ascending: true });
+
+  // Fetch author emails separately (avoid FK join issues)
+  const authorIds = articles?.map((a) => a.author_id).filter(Boolean) ?? [];
+  const { data: profiles } = authorIds.length > 0
+    ? await supabase.from("profiles").select("id, email, display_name").in("id", authorIds)
+    : { data: [] as { id: string; email: string; display_name: string | null }[] };
+  const profileMap = new Map(profiles?.map((p) => [p.id, p]));
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold">教材審査</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">記事審査</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          ユーザーが提出した教材の審査を行います
+          ユーザーが提出した記事の審査を行います
         </p>
       </div>
 
       {!articles || articles.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          審査待ちの教材はありません
+          審査待ちの記事はありません
         </div>
       ) : (
         <div className="border rounded-lg overflow-x-auto">
@@ -51,11 +58,12 @@ export default async function AdminReviewPage() {
                   <TableCell>
                     <div className="font-medium">{article.title}</div>
                     <div className="text-xs text-muted-foreground sm:hidden">
-                      {((article as Record<string, unknown>).profiles as { email: string } | null)?.email ?? "-"}
+                      {profileMap.get(article.author_id)?.display_name || profileMap.get(article.author_id)?.email || "-"}
                     </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
-                    {((article as Record<string, unknown>).profiles as { email: string } | null)?.email ?? "-"}
+                    <div>{profileMap.get(article.author_id)?.display_name || "-"}</div>
+                    <div className="text-xs">{profileMap.get(article.author_id)?.email || "-"}</div>
                   </TableCell>
                   <TableCell>
                     {article.is_free ? (

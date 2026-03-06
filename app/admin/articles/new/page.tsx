@@ -6,7 +6,7 @@ export default function NewArticlePage() {
     <div className="max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle>新規教材作成</CardTitle>
+          <CardTitle>新規記事作成</CardTitle>
         </CardHeader>
         <CardContent>
           <ArticleForm />

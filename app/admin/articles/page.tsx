@@ -19,19 +19,19 @@ export default async function AdminArticlesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">教材管理</h1>
+          <h1 className="text-2xl font-bold">記事管理</h1>
           <p className="text-muted-foreground mt-1">
-            教材の作成・編集・削除を行います
+            記事の作成・編集・削除を行います
           </p>
         </div>
         <Link href="/admin/articles/new">
-          <Button>新規教材作成</Button>
+          <Button>新規記事作成</Button>
         </Link>
       </div>
 
       {!articles || articles.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          教材がまだありません
+          記事がまだありません
         </div>
       ) : (
         <div className="border rounded-lg">
@@ -40,7 +40,7 @@ export default async function AdminArticlesPage() {
               <TableRow>
                 <TableHead>タイトル</TableHead>
                 <TableHead>価格</TableHead>
-                <TableHead>公開</TableHead>
+                <TableHead>ステータス</TableHead>
                 <TableHead>作成日</TableHead>
                 <TableHead className="text-right">アクション</TableHead>
               </TableRow>
@@ -57,8 +57,12 @@ export default async function AdminArticlesPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {article.published ? (
-                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">公開</Badge>
+                    {article.status === "published" ? (
+                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">公開中</Badge>
+                    ) : article.status === "pending_review" ? (
+                      <Badge variant="outline" className="text-yellow-600 border-yellow-600">審査中</Badge>
+                    ) : article.status === "rejected" ? (
+                      <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100">却下</Badge>
                     ) : (
                       <Badge variant="outline">下書き</Badge>
                     )}

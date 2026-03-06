@@ -12,14 +12,16 @@ export async function Header() {
 
   let isAdmin = false;
   let sellerStatus: string | null = null;
+  let avatarUrl: string | null = null;
   let cartCount = 0;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, avatar_url")
       .eq("id", user.id)
       .single();
     isAdmin = profile?.role === "admin";
+    avatarUrl = profile?.avatar_url ?? null;
 
     const { data: seller } = await supabase
       .from("seller_profiles")
@@ -58,42 +60,130 @@ export async function Header() {
         <div className="flex items-center gap-2 flex-shrink-0">
           {user ? (
             <>
+              {/* Icon-only: 閲覧履歴 */}
+              <Link
+                href="/purchases"
+                className="flex items-center justify-center w-9 h-9 rounded-md hover:bg-muted transition-colors"
+                aria-label="閲覧履歴"
+              >
+                <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
+                </svg>
+              </Link>
+
+              {/* Icon-only: ブックマーク */}
+              <Link
+                href="/purchases"
+                className="flex items-center justify-center w-9 h-9 rounded-md hover:bg-muted transition-colors"
+                aria-label="ブックマーク"
+              >
+                <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
+                </svg>
+              </Link>
+
+              {/* Separator */}
+              <div className="w-px h-5 bg-border mx-1" />
+
+              {/* 出品する */}
               <Link href={sellerStatus === "approved" ? "/sell" : "/seller/register"}>
-                <Button variant="ghost" size="sm" className="text-xs">
+                <Button variant="ghost" size="sm" className="gap-1.5 text-sm">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
+                  </svg>
                   出品する
                 </Button>
               </Link>
+
+              {/* 管理画面 (admin only) */}
               {isAdmin && (
                 <Link href="/admin">
-                  <Button variant="ghost" size="sm" className="text-xs">
+                  <Button variant="ghost" size="sm" className="gap-1.5 text-sm">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.204-.107-.397.165-.71.505-.78.929l-.15.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    </svg>
                     管理画面
                   </Button>
                 </Link>
               )}
-              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-secondary-foreground">
-                {user.email?.charAt(0).toUpperCase()}
-              </div>
+
+              {/* アカウント */}
+              <Link href="/account">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="アバター"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-secondary-foreground">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </Link>
+
+              {/* ログアウト */}
               <form action="/auth/signout" method="post">
-                <Button variant="ghost" size="sm" className="text-muted-foreground text-xs">
+                <Button variant="ghost" size="sm" className="gap-1.5 text-sm text-muted-foreground">
                   ログアウト
                 </Button>
               </form>
             </>
           ) : (
             <>
+              {/* Icon-only: 閲覧履歴 */}
+              <Link
+                href="/login"
+                className="flex items-center justify-center w-9 h-9 rounded-md hover:bg-muted transition-colors"
+                aria-label="閲覧履歴"
+              >
+                <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
+                </svg>
+              </Link>
+
+              {/* Icon-only: ブックマーク */}
+              <Link
+                href="/login"
+                className="flex items-center justify-center w-9 h-9 rounded-md hover:bg-muted transition-colors"
+                aria-label="ブックマーク"
+              >
+                <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
+                </svg>
+              </Link>
+
+              {/* Separator */}
+              <div className="w-px h-5 bg-border mx-1" />
+
+              {/* 出品する */}
               <Link href="/seller/register">
-                <Button variant="ghost" size="sm" className="text-xs">
+                <Button variant="ghost" size="sm" className="gap-1.5 text-sm">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
+                  </svg>
                   出品する
                 </Button>
               </Link>
-              <Link href="/login">
-                <Button variant="ghost" size="sm">
-                  ログイン
+
+              {/* 会員登録 */}
+              <Link href="/signup">
+                <Button variant="ghost" size="sm" className="gap-1.5 text-sm">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+                  </svg>
+                  会員登録
                 </Button>
               </Link>
-              <Link href="/signup">
-                <Button size="sm" className="rounded-full px-4">
-                  新規登録
+
+              {/* ログイン */}
+              <Link href="/login">
+                <Button variant="ghost" size="sm" className="gap-1.5 text-sm">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />
+                  </svg>
+                  ログイン
                 </Button>
               </Link>
             </>
@@ -122,27 +212,38 @@ export async function Header() {
           <Link
             href={user ? (sellerStatus === "approved" ? "/sell/new" : "/seller/register") : "/seller/register"}
             className="flex-shrink-0 h-7 px-2.5 flex items-center gap-1 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
-            aria-label="出品する"
+            aria-label="投稿"
           >
             <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            <span className="text-xs font-semibold text-primary">出品</span>
+            <span className="text-xs font-semibold text-primary">投稿</span>
           </Link>
 
           {/* Login / Avatar */}
           {user ? (
             <Link href="/account" className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-secondary-foreground">
-                {user.email?.charAt(0).toUpperCase()}
-              </div>
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="アバター"
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-secondary-foreground">
+                  {user.email?.charAt(0).toUpperCase()}
+                </div>
+              )}
             </Link>
           ) : (
-            <Link href="/login" className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-              <svg className="w-[22px] h-[22px] text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-              </svg>
-            </Link>
+            <>
+              <Link
+                href="/signup"
+                className="flex-shrink-0 h-7 px-2.5 flex items-center rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+              >
+                会員登録
+              </Link>
+            </>
           )}
 
           {/* Cart */}

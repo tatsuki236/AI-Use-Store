@@ -40,8 +40,19 @@ export default async function AdminSellersPage() {
 
   const { data: sellers } = await supabase
     .from("seller_profiles")
-    .select("*, profiles:user_id(email)")
+    .select("*")
     .order("created_at", { ascending: false });
+
+  // Fetch emails separately
+  const userIds = sellers?.map((s) => s.user_id).filter(Boolean) ?? [];
+  const { data: profiles } = userIds.length > 0
+    ? await supabase
+        .from("profiles")
+        .select("id, email")
+        .in("id", userIds)
+    : { data: [] as { id: string; email: string }[] };
+
+  const emailMap = new Map(profiles?.map((p) => [p.id, p.email]));
 
   return (
     <div>
@@ -74,11 +85,11 @@ export default async function AdminSellersPage() {
                   <TableCell>
                     <div className="font-medium">{seller.full_name}</div>
                     <div className="text-xs text-muted-foreground sm:hidden">
-                      {((seller as Record<string, unknown>).profiles as { email: string } | null)?.email ?? "-"}
+                      {emailMap.get(seller.user_id) ?? "-"}
                     </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
-                    {((seller as Record<string, unknown>).profiles as { email: string } | null)?.email ?? "-"}
+                    {emailMap.get(seller.user_id) ?? "-"}
                   </TableCell>
                   <TableCell>{statusBadge(seller.status)}</TableCell>
                   <TableCell className="hidden sm:table-cell">

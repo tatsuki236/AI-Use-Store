@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { categorizeArticle } from "@/lib/categorize";
 
 async function requireArticleOwner(articleId: string) {
   const supabase = await createClient();
@@ -39,6 +40,7 @@ export async function updateUserArticle(articleId: string, formData: FormData) {
   const action = formData.get("action") as string;
 
   const status = action === "submit" ? "pending_review" : "draft";
+  const category = await categorizeArticle(title, content);
 
   const { error } = await supabase
     .from("articles")
@@ -51,6 +53,7 @@ export async function updateUserArticle(articleId: string, formData: FormData) {
       status,
       rejection_reason: null,
       updated_at: new Date().toISOString(),
+      category,
     })
     .eq("id", articleId);
 

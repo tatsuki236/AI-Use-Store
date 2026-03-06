@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isInAppBrowser } from "@/lib/detect-inapp-browser";
 
 const GoogleIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -18,18 +19,31 @@ const GoogleIcon = () => (
 );
 
 const benefits = [
-  { icon: "📚", title: "500+の教材", desc: "AI・プログラミングの実践教材" },
+  { icon: "📚", title: "500+の記事", desc: "AI・プログラミングの実践記事" },
   { icon: "🎯", title: "実践重視", desc: "すぐに使えるスキルが身につく" },
-  { icon: "🆓", title: "無料教材も充実", desc: "登録だけで読める教材多数" },
+  { icon: "🆓", title: "無料記事も充実", desc: "登録だけで読める記事多数" },
 ];
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [inApp, setInApp] = useState(false);
+  // "otp-email" = OTPメール入力, "otp-code" = OTPコード入力, "password" = パスワードログイン
+  const [loginMode, setLoginMode] = useState<"otp-email" | "otp-code" | "password">("password");
+  const [otpSent, setOtpSent] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    const detected = isInAppBrowser();
+    setInApp(detected);
+    if (detected) {
+      setLoginMode("otp-email");
+    }
+  }, []);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -54,6 +68,275 @@ export default function LoginPage() {
     if (error) setError(error.message);
   }
 
+  async function handleSendOtp(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      setOtpSent(true);
+      setLoginMode("otp-code");
+      setLoading(false);
+    }
+  }
+
+  async function handleVerifyOtp(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: otpCode,
+      type: "email",
+    });
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      router.push("/");
+      router.refresh();
+    }
+  }
+
+  async function handleResendOtp() {
+    setLoading(true);
+    setError("");
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    if (error) {
+      setError(error.message);
+    } else {
+      setError("");
+      setOtpCode("");
+    }
+    setLoading(false);
+  }
+
+  // OTPフロー: メールアドレス入力画面
+  function renderOtpEmailForm() {
+    return (
+      <>
+        <h2 className="text-2xl font-bold text-center">ログイン</h2>
+        <p className="mt-1 text-sm text-muted-foreground text-center">
+          認証コードでログイン
+        </p>
+
+        {error && (
+          <div className="mt-6 text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSendOtp} className="mt-8 space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-xs font-medium">
+              メールアドレス
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="h-11 rounded-xl"
+            />
+          </div>
+          <Button
+            type="submit"
+            className="w-full h-11 rounded-xl font-semibold"
+            disabled={loading}
+          >
+            {loading ? "送信中..." : "認証コードを送信"}
+          </Button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setLoginMode("password");
+              setError("");
+            }}
+            className="text-sm text-primary hover:underline"
+          >
+            パスワードでログイン
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  // OTPフロー: コード入力画面
+  function renderOtpCodeForm() {
+    return (
+      <>
+        <h2 className="text-2xl font-bold text-center">認証コードを入力</h2>
+        <p className="mt-1 text-sm text-muted-foreground text-center">
+          <span className="font-medium text-foreground">{email}</span> に送信しました
+        </p>
+
+        {error && (
+          <div className="mt-6 text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleVerifyOtp} className="mt-8 space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="otp" className="text-xs font-medium">
+              6桁の認証コード
+            </Label>
+            <Input
+              id="otp"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              placeholder="000000"
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+              required
+              className="h-11 rounded-xl text-center text-lg tracking-[0.3em]"
+              autoFocus
+            />
+          </div>
+          <Button
+            type="submit"
+            className="w-full h-11 rounded-xl font-semibold"
+            disabled={loading || otpCode.length !== 6}
+          >
+            {loading ? "認証中..." : "ログイン"}
+          </Button>
+        </form>
+
+        <div className="mt-6 space-y-2 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setLoginMode("otp-email");
+              setOtpCode("");
+              setError("");
+            }}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors block mx-auto"
+          >
+            ← メールアドレスに戻る
+          </button>
+          <button
+            type="button"
+            onClick={handleResendOtp}
+            disabled={loading}
+            className="text-sm text-primary hover:underline"
+          >
+            コードを再送信
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  // パスワードログインフォーム（通常 or アプリ内ブラウザからの切り替え）
+  function renderPasswordForm() {
+    return (
+      <>
+        <h2 className="text-2xl font-bold text-center">ログイン</h2>
+        <p className="mt-1 text-sm text-muted-foreground text-center">
+          アカウントにログインして学習を続けましょう
+        </p>
+
+        {/* Google OAuth: 通常ブラウザのみ表示 */}
+        {!inApp && (
+          <>
+            <div className="mt-8">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-11 rounded-xl text-sm font-medium"
+                onClick={handleGoogleLogin}
+              >
+                <GoogleIcon />
+                <span className="ml-2">Googleでログイン</span>
+              </Button>
+            </div>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-muted/30 px-3 text-xs text-muted-foreground">
+                  またはメールでログイン
+                </span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {error && (
+          <div className={`text-sm text-destructive bg-destructive/10 p-3 rounded-lg ${inApp ? "mt-8" : ""} mb-4`}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className={`space-y-4 ${!error && inApp ? "mt-8" : ""}`}>
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-xs font-medium">
+              メールアドレス
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="h-11 rounded-xl"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-xs font-medium">
+              パスワード
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="パスワードを入力"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="h-11 rounded-xl"
+            />
+          </div>
+          <Button
+            type="submit"
+            className="w-full h-11 rounded-xl font-semibold"
+            disabled={loading}
+          >
+            {loading ? "ログイン中..." : "ログイン"}
+          </Button>
+        </form>
+
+        {/* アプリ内ブラウザの場合、OTPに戻るリンクを表示 */}
+        {inApp && (
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMode("otp-email");
+                setError("");
+              }}
+              className="text-sm text-primary hover:underline"
+            >
+              ← 認証コードでログイン
+            </button>
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-muted/30 flex">
       {/* Left: Branding & Benefits */}
@@ -73,7 +356,7 @@ export default function LoginPage() {
             <span className="text-primary">自由</span>に。
           </h1>
           <p className="mt-3 text-muted-foreground leading-relaxed">
-            AIスキルを、実践的な教材で学べる<br />
+            AIスキルを、実践的な記事で学べる<br />
             AI特化型ナレッジプラットフォーム
           </p>
 
@@ -105,80 +388,9 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <h2 className="text-2xl font-bold text-center">ログイン</h2>
-          <p className="mt-1 text-sm text-muted-foreground text-center">
-            アカウントにログインして学習を続けましょう
-          </p>
-
-          {/* Section 1: Social Login */}
-          <div className="mt-8">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-11 rounded-xl text-sm font-medium"
-              onClick={handleGoogleLogin}
-            >
-              <GoogleIcon />
-              <span className="ml-2">Googleでログイン</span>
-            </Button>
-          </div>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-muted/30 px-3 text-xs text-muted-foreground">
-                またはメールでログイン
-              </span>
-            </div>
-          </div>
-
-          {/* Section 2: Email Login */}
-          {error && (
-            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg mb-4">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs font-medium">
-                メールアドレス
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-11 rounded-xl"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs font-medium">
-                パスワード
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="パスワードを入力"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-11 rounded-xl"
-              />
-            </div>
-            <Button
-              type="submit"
-              className="w-full h-11 rounded-xl font-semibold"
-              disabled={loading}
-            >
-              {loading ? "ログイン中..." : "ログイン"}
-            </Button>
-          </form>
+          {loginMode === "otp-email" && renderOtpEmailForm()}
+          {loginMode === "otp-code" && renderOtpCodeForm()}
+          {loginMode === "password" && renderPasswordForm()}
 
           {/* Section 3: Navigation */}
           <div className="mt-8 space-y-3 text-center">

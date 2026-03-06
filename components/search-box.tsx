@@ -21,7 +21,7 @@ export function SearchBox() {
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="教材を検索..."
+        placeholder="記事を検索..."
         className="w-full h-10 pl-4 pr-12 rounded-lg bg-white border-2 border-primary/40 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary transition-colors"
       />
       <button

@@ -48,6 +48,29 @@ async function run(label, sql) {
   );
 
   // ============================================================
+  // 1b. profiles テーブル追加カラム
+  // ============================================================
+  console.log("\n1b. profiles テーブル追加カラム");
+  await run(
+    "profiles.display_name",
+    "ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS display_name text;"
+  );
+  await run(
+    "profiles.avatar_url",
+    "ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_url text;"
+  );
+
+  // Allow anyone to read display_name/avatar for article author display
+  await run(
+    "policy: Anyone can view public profile fields",
+    `DO $$ BEGIN
+       DROP POLICY IF EXISTS "Anyone can view public profile fields" ON public.profiles;
+       CREATE POLICY "Anyone can view public profile fields"
+         ON public.profiles FOR SELECT USING (true);
+     END $$;`
+  );
+
+  // ============================================================
   // 2. articles テーブル
   // ============================================================
   console.log("\n2. articles テーブル");
@@ -93,6 +116,7 @@ async function run(label, sql) {
     ["updated_at", "timestamptz NOT NULL DEFAULT now()"],
     ["purchase_count", "integer NOT NULL DEFAULT 0"],
     ["review_count", "integer NOT NULL DEFAULT 0"],
+    ["category", "text"],
   ];
   for (const [col, type] of articleColumns) {
     await run(
@@ -434,6 +458,44 @@ async function run(label, sql) {
   );
 
   // ============================================================
+  // 8b. likes テーブル (新規)
+  // ============================================================
+  console.log("\n8b. likes テーブル");
+  await run(
+    "CREATE TABLE likes",
+    `CREATE TABLE IF NOT EXISTS public.likes (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+      article_id uuid NOT NULL REFERENCES public.articles(id) ON DELETE CASCADE,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      UNIQUE (user_id, article_id)
+    );`
+  );
+  await run("idx_likes_article_id", "CREATE INDEX IF NOT EXISTS idx_likes_article_id ON public.likes(article_id);");
+  await run("idx_likes_user_id", "CREATE INDEX IF NOT EXISTS idx_likes_user_id ON public.likes(user_id);");
+  await run(
+    "articles.like_count",
+    "ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS like_count integer NOT NULL DEFAULT 0;"
+  );
+  await run("likes RLS", "ALTER TABLE public.likes ENABLE ROW LEVEL SECURITY;");
+
+  const likesPolicies = [
+    ["Anyone can view likes", "SELECT", "USING (true)"],
+    ["Users can insert own likes", "INSERT", "WITH CHECK (auth.uid() = user_id)"],
+    ["Users can delete own likes", "DELETE", "USING (auth.uid() = user_id)"],
+    ["Admins can manage all likes", "ALL", "USING (public.is_admin())"],
+  ];
+  for (const [name, action, clause] of likesPolicies) {
+    await run(
+      `policy: ${name}`,
+      `DO $$ BEGIN
+         DROP POLICY IF EXISTS "${name}" ON public.likes;
+         CREATE POLICY "${name}" ON public.likes FOR ${action} ${clause};
+       END $$;`
+    );
+  }
+
+  // ============================================================
   // 9. トリガー・関数
   // ============================================================
   console.log("\n9. トリガー・関数");
@@ -520,6 +582,33 @@ async function run(label, sql) {
      FOR EACH ROW EXECUTE FUNCTION public.update_article_review_count();`
   );
 
+  // like_count 自動更新トリガー
+  await run(
+    "update_article_like_count()",
+    `CREATE OR REPLACE FUNCTION public.update_article_like_count()
+     RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $$
+     DECLARE
+       target_article_id uuid;
+     BEGIN
+       IF TG_OP = 'DELETE' THEN target_article_id := OLD.article_id;
+       ELSE target_article_id := NEW.article_id; END IF;
+       UPDATE public.articles SET like_count = (
+         SELECT COUNT(*) FROM public.likes l
+         WHERE l.article_id = target_article_id
+       ) WHERE id = target_article_id;
+       IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+       RETURN NEW;
+     END; $$;`
+  );
+
+  await run("DROP trg_update_article_like_count", "DROP TRIGGER IF EXISTS trg_update_article_like_count ON public.likes;");
+  await run(
+    "trg_update_article_like_count",
+    `CREATE TRIGGER trg_update_article_like_count
+     AFTER INSERT OR DELETE ON public.likes
+     FOR EACH ROW EXECUTE FUNCTION public.update_article_like_count();`
+  );
+
   await run(
     "get_course_lessons()",
     `CREATE OR REPLACE FUNCTION public.get_course_lessons(p_course_id uuid)
@@ -571,7 +660,7 @@ async function run(label, sql) {
   const expectedTables = [
     "profiles", "courses", "lessons", "articles",
     "purchases", "reviews", "seller_profiles", "withdrawal_requests",
-    "stripe_payments", "banners",
+    "stripe_payments", "banners", "likes",
   ];
   const existingTables = tables.map((r) => r.tablename);
   const missing = expectedTables.filter((t) => !existingTables.includes(t));

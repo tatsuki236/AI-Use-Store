@@ -57,8 +57,8 @@ export default async function AdminLayout({
           <nav className="container mx-auto px-4 flex gap-1 overflow-x-auto scrollbar-hide">
             {[
               { href: "/admin", label: "購入管理" },
-              { href: "/admin/articles", label: "教材管理" },
-              { href: "/admin/review", label: "教材審査" },
+              { href: "/admin/articles", label: "記事管理" },
+              { href: "/admin/review", label: "記事審査" },
               { href: "/admin/sellers", label: "出品者管理" },
               { href: "/admin/withdrawals", label: "出金管理" },
             ].map((item) => (
