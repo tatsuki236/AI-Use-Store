@@ -712,6 +712,50 @@ async function run(label, sql) {
   );
 
   // ============================================================
+  // 9b. ストレージバケット: article-images
+  // ============================================================
+  console.log("\n9b. ストレージバケット: article-images");
+  await run(
+    "CREATE bucket article-images",
+    `INSERT INTO storage.buckets (id, name, public)
+     VALUES ('article-images', 'article-images', true)
+     ON CONFLICT (id) DO UPDATE SET public = true;`
+  );
+
+  // 誰でも閲覧可能
+  await run(
+    "policy: Anyone can view article images",
+    `DO $$ BEGIN
+       DROP POLICY IF EXISTS "Anyone can view article images" ON storage.objects;
+       CREATE POLICY "Anyone can view article images"
+         ON storage.objects FOR SELECT
+         USING (bucket_id = 'article-images');
+     END $$;`
+  );
+
+  // ログインユーザーのみアップロード可能
+  await run(
+    "policy: Authenticated users can upload article images",
+    `DO $$ BEGIN
+       DROP POLICY IF EXISTS "Authenticated users can upload article images" ON storage.objects;
+       CREATE POLICY "Authenticated users can upload article images"
+         ON storage.objects FOR INSERT
+         WITH CHECK (bucket_id = 'article-images' AND auth.role() = 'authenticated');
+     END $$;`
+  );
+
+  // ユーザーは自分の画像を削除可能
+  await run(
+    "policy: Users can delete own article images",
+    `DO $$ BEGIN
+       DROP POLICY IF EXISTS "Users can delete own article images" ON storage.objects;
+       CREATE POLICY "Users can delete own article images"
+         ON storage.objects FOR DELETE
+         USING (bucket_id = 'article-images' AND auth.uid()::text = (storage.foldername(name))[1]);
+     END $$;`
+  );
+
+  // ============================================================
   // 10. 検証
   // ============================================================
   console.log("\n10. 検証");

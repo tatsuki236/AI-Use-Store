@@ -636,5 +636,25 @@ create policy "Admins can manage all bookmarks"
 -- ============================================
 -- ストレージバケット
 -- ============================================
--- Supabase Dashboard > Storage から以下を作成:
 -- バケット名: id-documents (非公開)
+-- バケット名: article-images (公開)
+
+-- article-images バケット作成
+insert into storage.buckets (id, name, public)
+values ('article-images', 'article-images', true)
+on conflict (id) do update set public = true;
+
+-- 誰でも閲覧可能
+create policy "Anyone can view article images"
+  on storage.objects for select
+  using (bucket_id = 'article-images');
+
+-- ログインユーザーのみアップロード可能
+create policy "Authenticated users can upload article images"
+  on storage.objects for insert
+  with check (bucket_id = 'article-images' and auth.role() = 'authenticated');
+
+-- ユーザーは自分の画像を削除可能
+create policy "Users can delete own article images"
+  on storage.objects for delete
+  using (bucket_id = 'article-images' and auth.uid()::text = (storage.foldername(name))[1]);
