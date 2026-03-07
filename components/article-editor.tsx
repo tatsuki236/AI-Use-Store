@@ -138,8 +138,6 @@ export function ArticleEditor({
   rejectionNotice,
 }: ArticleEditorProps) {
   const formRef = useRef<HTMLFormElement>(null);
-  const thumbnailInputRef = useRef<HTMLInputElement>(null);
-  const bodyImageInputRef = useRef<HTMLInputElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [price, setPrice] = useState(article?.price ?? 0);
   const [thumbnailUrl, setThumbnailUrl] = useState(
@@ -224,10 +222,6 @@ export function ArticleEditor({
     }
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   }, [editor]);
-
-  const addImage = useCallback(() => {
-    bodyImageInputRef.current?.click();
-  }, []);
 
   const handleBodyImageUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -486,9 +480,15 @@ export function ArticleEditor({
                 <button type="button" onClick={setLink} className={`toolbar-btn ${editor.isActive("link") ? "is-active" : ""}`} title="リンク">
                   🔗
                 </button>
-                <button type="button" onClick={addImage} className="toolbar-btn" title="画像" disabled={uploading}>
-                  {uploading ? "..." : "🖼"}
-                </button>
+                <label className={`toolbar-btn cursor-pointer ${uploading ? "opacity-50 pointer-events-none" : ""}`} title="画像">
+                  {uploading ? "..." : "\uD83D\uDDBC"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleBodyImageUpload}
+                  />
+                </label>
                 <button type="button" onClick={addYoutube} className="toolbar-btn" title="YouTube">
                   ▶
                 </button>
@@ -667,15 +667,17 @@ export function ArticleEditor({
             <div className="space-y-2">
               <Label>サムネイル画像</Label>
               <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={uploading}
-                  onClick={() => thumbnailInputRef.current?.click()}
+                <label
+                  className={`inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3 cursor-pointer ${uploading ? "opacity-50 pointer-events-none" : ""}`}
                 >
                   {uploading ? "アップロード中..." : "画像を選択"}
-                </Button>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleThumbnailUpload}
+                  />
+                </label>
                 {thumbnailUrl && (
                   <span className="text-xs text-muted-foreground truncate max-w-[200px]">
                     設定済み
@@ -723,21 +725,6 @@ export function ArticleEditor({
         </DialogContent>
       </Dialog>
 
-      {/* Hidden file inputs for image upload */}
-      <input
-        ref={thumbnailInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        className="hidden"
-        onChange={handleThumbnailUpload}
-      />
-      <input
-        ref={bodyImageInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        className="hidden"
-        onChange={handleBodyImageUpload}
-      />
     </form>
   );
 }
