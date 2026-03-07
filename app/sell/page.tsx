@@ -53,6 +53,14 @@ export default async function SellDashboardPage() {
     redirect("/seller/register");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .single();
+
+  const hasDisplayName = !!profile?.display_name?.trim();
+
   const { data: articles } = await supabase
     .from("articles")
     .select("id, title, status, price, is_free, created_at, updated_at")
@@ -82,6 +90,23 @@ export default async function SellDashboardPage() {
             </Link>
           </div>
         </div>
+
+        {!hasDisplayName && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex items-center gap-3">
+            <svg className="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+            </svg>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-amber-800">ニックネームが未設定です</p>
+              <p className="text-xs text-amber-700 mt-0.5">記事を投稿するにはニックネームの設定が必要です。</p>
+            </div>
+            <Link href="/account">
+              <Button size="sm" variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-100 flex-shrink-0">
+                設定する
+              </Button>
+            </Link>
+          </div>
+        )}
 
         {!articles || articles.length === 0 ? (
           <div className="bg-card border rounded-xl p-8 sm:p-12 text-center">

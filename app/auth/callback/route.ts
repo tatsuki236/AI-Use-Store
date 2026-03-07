@@ -12,6 +12,18 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // ニックネーム未設定ならアカウント設定へ誘導
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", user.id)
+          .single();
+        if (!profile?.display_name?.trim()) {
+          return NextResponse.redirect(`${origin}/account`);
+        }
+      }
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

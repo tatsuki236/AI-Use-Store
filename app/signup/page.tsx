@@ -25,6 +25,7 @@ const benefits = [
 ];
 
 export default function SignupPage() {
+  const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -42,12 +43,21 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    if (!nickname.trim()) {
+      setError("ニックネームを入力してください");
+      setLoading(false);
+      return;
+    }
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) {
       setError(error.message);
       setLoading(false);
     } else if (data.session) {
-      // セッションが返ってきた = そのままログイン済み
+      // セッションが返ってきた = そのままログイン済み → ニックネーム保存
+      await supabase
+        .from("profiles")
+        .update({ display_name: nickname.trim() })
+        .eq("id", data.session.user.id);
       router.push("/");
     } else {
       // メール確認が必要な場合のフォールバック
@@ -189,8 +199,23 @@ export default function SignupPage() {
 
           <form onSubmit={handleSignup} className={`space-y-4 ${inApp && !error ? "mt-8" : ""}`}>
             <div className="space-y-1.5">
+              <Label htmlFor="nickname" className="text-xs font-medium">
+                ニックネーム <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="nickname"
+                type="text"
+                placeholder="表示名を入力"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                required
+                maxLength={30}
+                className="h-11 rounded-xl"
+              />
+            </div>
+            <div className="space-y-1.5">
               <Label htmlFor="email" className="text-xs font-medium">
-                メールアドレス
+                メールアドレス <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="email"
@@ -204,7 +229,7 @@ export default function SignupPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-xs font-medium">
-                パスワード
+                パスワード <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="password"

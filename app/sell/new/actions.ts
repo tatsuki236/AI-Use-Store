@@ -22,6 +22,16 @@ async function requireApprovedSeller() {
     throw new Error("出品者として承認されていません");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.display_name?.trim()) {
+    throw new Error("記事を投稿するにはニックネームの設定が必要です。アカウント設定から設定してください。");
+  }
+
   return { supabase, user };
 }
 

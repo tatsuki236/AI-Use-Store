@@ -26,6 +26,16 @@ async function requireArticleOwner(articleId: string) {
     throw new Error("この記事は編集できません");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.display_name?.trim()) {
+    throw new Error("記事を投稿するにはニックネームの設定が必要です。アカウント設定から設定してください。");
+  }
+
   return { supabase, user };
 }
 
