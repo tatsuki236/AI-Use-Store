@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyle } from "@tiptap/extension-text-style";
@@ -121,15 +122,42 @@ const CODE_LANGUAGES = [
 ];
 
 async function uploadImage(file: File): Promise<string | null> {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await fetch("/api/upload", { method: "POST", body: formData });
-  const data = await res.json();
-  if (!res.ok) {
-    alert(data.error || "アップロードに失敗しました");
+  const MAX_SIZE = 5 * 1024 * 1024;
+  const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+  if (!ALLOWED.includes(file.type)) {
+    alert("許可されていないファイル形式です (JPEG, PNG, WebP, GIF のみ)");
     return null;
   }
-  return data.url;
+  if (file.size > MAX_SIZE) {
+    alert("ファイルサイズは5MB以下にしてください");
+    return null;
+  }
+
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    alert("ログインが必要です");
+    return null;
+  }
+
+  const ext = file.name.split(".").pop() || "jpg";
+  const filePath = `${user.id}/${Date.now()}_${crypto.randomUUID()}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from("article-images")
+    .upload(filePath, file, { contentType: file.type });
+
+  if (error) {
+    alert("アップロードに失敗しました: " + error.message);
+    return null;
+  }
+
+  const { data: urlData } = supabase.storage
+    .from("article-images")
+    .getPublicUrl(filePath);
+
+  return urlData.publicUrl;
 }
 
 export function ArticleEditor({
