@@ -31,7 +31,7 @@ export default async function HomePage({
   // Build filtered query
   let query = supabase
     .from("articles")
-    .select("id, title, content, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count, category")
+    .select("id, title, content, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count, category, slug")
     .eq("published", true);
 
   // Category filter
@@ -68,7 +68,7 @@ export default async function HomePage({
   // Trending: top by purchase_count
   const { data: trending } = await supabase
     .from("articles")
-    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count")
+    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count, slug")
     .eq("published", true)
     .order("purchase_count", { ascending: false })
     .order("rating", { ascending: false })
@@ -78,7 +78,7 @@ export default async function HomePage({
   const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
   const { data: newArrivals } = await supabase
     .from("articles")
-    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count")
+    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count, slug")
     .eq("published", true)
     .gte("created_at", twoWeeksAgo)
     .order("created_at", { ascending: false })
@@ -87,7 +87,7 @@ export default async function HomePage({
   // Ranking (top 5 by rating)
   const { data: ranked } = await supabase
     .from("articles")
-    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count")
+    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count, slug")
     .eq("published", true)
     .order("rating", { ascending: false })
     .limit(10);
@@ -103,7 +103,7 @@ export default async function HomePage({
     .order("sort_order", { ascending: true });
 
   const featured = !hasFilters ? (articles?.[0] ?? null) : null;
-  const gridArticles = hasFilters ? (articles ?? []) : (articles?.slice(1) ?? []);
+  const gridArticles = articles ?? [];
 
   return (
     <div className="min-h-screen">
@@ -135,7 +135,7 @@ export default async function HomePage({
                 return (
                   <Link
                     key={article.id}
-                    href={`/articles/${article.id}`}
+                    href={`/articles/${article.slug || article.id}`}
                     className="group flex-shrink-0 w-44"
                     style={{ scrollSnapAlign: "start" }}
                   >
@@ -178,7 +178,7 @@ export default async function HomePage({
         {/* Featured Article */}
         {featured && (
           <section className="mb-10">
-            <Link href={`/articles/${featured.id}`} className="group block">
+            <Link href={`/articles/${featured.slug || featured.id}`} className="group block">
               <div className="relative grid grid-cols-1 md:grid-cols-2 gap-0 bg-card rounded-2xl overflow-hidden border border-border/60 hover:shadow-xl transition-all duration-300">
                 <div className="absolute top-3 left-3 z-10 flex gap-1.5">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-white bg-primary px-2.5 py-1 rounded-full shadow-sm">

@@ -38,6 +38,8 @@ export async function updateUserArticle(articleId: string, formData: FormData) {
   const is_free = formData.get("is_free") === "on";
   const thumbnail_url = (formData.get("thumbnail_url") as string) || null;
   const action = formData.get("action") as string;
+  const slugRaw = (formData.get("slug") as string)?.trim();
+  const slug = slugRaw || null;
 
   const status = action === "submit" ? "pending_review" : "draft";
   const category = await categorizeArticle(title, content);
@@ -54,6 +56,7 @@ export async function updateUserArticle(articleId: string, formData: FormData) {
       rejection_reason: null,
       updated_at: new Date().toISOString(),
       category,
+      slug,
     })
     .eq("id", articleId);
 

@@ -67,6 +67,7 @@ type ArticleEditorProps = {
     price: number;
     is_free: boolean;
     thumbnail_url: string | null;
+    slug?: string | null;
   };
   rejectionNotice?: React.ReactNode;
 };
@@ -149,6 +150,7 @@ export function ArticleEditor({
   const [content, setContent] = useState("");
   const [colorMenuOpen, setColorMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [slug, setSlug] = useState(article?.slug ?? "");
   const [uploading, setUploading] = useState(false);
 
   // Prepare initial content
@@ -309,6 +311,7 @@ export function ArticleEditor({
       <input type="hidden" name="thumbnail_url" value={thumbnailUrl} />
       <input type="hidden" name="content" value={content} />
       {isFree && <input type="hidden" name="is_free" value="on" />}
+      <input type="hidden" name="slug" value={slug} />
 
       {/* Fixed top bar */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b">
@@ -623,6 +626,21 @@ export function ArticleEditor({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="dialog-slug">カスタムURL（スラッグ）</Label>
+              <Input
+                id="dialog-slug"
+                type="text"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                placeholder="例: chatgpt-beginner-guide"
+                pattern="[a-z0-9-]*"
+              />
+              <p className="text-xs text-muted-foreground">
+                半角英数字とハイフンのみ。未設定の場合はIDがURLになります。
+              </p>
+            </div>
+
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"

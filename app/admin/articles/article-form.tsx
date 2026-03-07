@@ -16,6 +16,7 @@ type Article = {
   is_free: boolean;
   published: boolean;
   thumbnail_url: string | null;
+  slug?: string | null;
 };
 
 export function ArticleForm({ article }: { article?: Article }) {
@@ -60,6 +61,19 @@ export function ArticleForm({ article }: { article?: Article }) {
           defaultValue={article?.title}
           placeholder="例: AI入門ガイド"
         />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="slug">カスタムURL（スラッグ）</Label>
+        <Input
+          id="slug"
+          name="slug"
+          defaultValue={article?.slug ?? ""}
+          placeholder="例: chatgpt-beginner-guide"
+          pattern="[a-z0-9-]*"
+        />
+        <p className="text-xs text-muted-foreground">
+          半角英数字とハイフンのみ。未設定の場合はIDがURLになります。
+        </p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="content">内容 (Markdown)</Label>

@@ -91,6 +91,57 @@ export async function toggleLike(articleId: string) {
   revalidatePath("/");
 }
 
+export async function recordView(articleId: string) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return; // silently skip for non-logged-in users
+
+  await supabase.from("article_views").upsert(
+    {
+      user_id: user.id,
+      article_id: articleId,
+      viewed_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,article_id" }
+  );
+}
+
+export async function toggleBookmark(articleId: string) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("ログインが必要です");
+
+  const { data: existing } = await supabase
+    .from("bookmarks")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("article_id", articleId)
+    .single();
+
+  if (existing) {
+    const { error } = await supabase
+      .from("bookmarks")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("article_id", articleId);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase.from("bookmarks").insert({
+      user_id: user.id,
+      article_id: articleId,
+    });
+    if (error) throw new Error(error.message);
+  }
+
+  revalidatePath(`/articles/${articleId}`);
+}
+
 export async function deleteReview(articleId: string) {
   const supabase = await createClient();
 

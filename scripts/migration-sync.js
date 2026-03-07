@@ -117,6 +117,7 @@ async function run(label, sql) {
     ["purchase_count", "integer NOT NULL DEFAULT 0"],
     ["review_count", "integer NOT NULL DEFAULT 0"],
     ["category", "text"],
+    ["slug", "text"],
   ];
   for (const [col, type] of articleColumns) {
     await run(
@@ -124,6 +125,12 @@ async function run(label, sql) {
       `ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS ${col} ${type};`
     );
   }
+
+  // slug ユニークインデックス
+  await run(
+    "articles_slug_unique",
+    "CREATE UNIQUE INDEX IF NOT EXISTS articles_slug_unique ON public.articles(slug) WHERE slug IS NOT NULL;"
+  );
 
   // RLS
   await run("articles RLS", "ALTER TABLE public.articles ENABLE ROW LEVEL SECURITY;");
@@ -496,6 +503,74 @@ async function run(label, sql) {
   }
 
   // ============================================================
+  // 8c. article_views テーブル (新規)
+  // ============================================================
+  console.log("\n8c. article_views テーブル");
+  await run(
+    "CREATE TABLE article_views",
+    `CREATE TABLE IF NOT EXISTS public.article_views (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+      article_id uuid NOT NULL REFERENCES public.articles(id) ON DELETE CASCADE,
+      viewed_at timestamptz NOT NULL DEFAULT now(),
+      UNIQUE (user_id, article_id)
+    );`
+  );
+  await run("idx_article_views_user_id", "CREATE INDEX IF NOT EXISTS idx_article_views_user_id ON public.article_views(user_id);");
+  await run("idx_article_views_article_id", "CREATE INDEX IF NOT EXISTS idx_article_views_article_id ON public.article_views(article_id);");
+  await run("article_views RLS", "ALTER TABLE public.article_views ENABLE ROW LEVEL SECURITY;");
+
+  const articleViewsPolicies = [
+    ["Users can view own article_views", "SELECT", "USING (auth.uid() = user_id)"],
+    ["Users can insert own article_views", "INSERT", "WITH CHECK (auth.uid() = user_id)"],
+    ["Users can update own article_views", "UPDATE", "USING (auth.uid() = user_id)"],
+    ["Admins can manage all article_views", "ALL", "USING (public.is_admin())"],
+  ];
+  for (const [name, action, clause] of articleViewsPolicies) {
+    await run(
+      `policy: ${name}`,
+      `DO $$ BEGIN
+         DROP POLICY IF EXISTS "${name}" ON public.article_views;
+         CREATE POLICY "${name}" ON public.article_views FOR ${action} ${clause};
+       END $$;`
+    );
+  }
+
+  // ============================================================
+  // 8d. bookmarks テーブル (新規)
+  // ============================================================
+  console.log("\n8d. bookmarks テーブル");
+  await run(
+    "CREATE TABLE bookmarks",
+    `CREATE TABLE IF NOT EXISTS public.bookmarks (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+      article_id uuid NOT NULL REFERENCES public.articles(id) ON DELETE CASCADE,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      UNIQUE (user_id, article_id)
+    );`
+  );
+  await run("idx_bookmarks_user_id", "CREATE INDEX IF NOT EXISTS idx_bookmarks_user_id ON public.bookmarks(user_id);");
+  await run("idx_bookmarks_article_id", "CREATE INDEX IF NOT EXISTS idx_bookmarks_article_id ON public.bookmarks(article_id);");
+  await run("bookmarks RLS", "ALTER TABLE public.bookmarks ENABLE ROW LEVEL SECURITY;");
+
+  const bookmarksPolicies = [
+    ["Users can view own bookmarks", "SELECT", "USING (auth.uid() = user_id)"],
+    ["Users can insert own bookmarks", "INSERT", "WITH CHECK (auth.uid() = user_id)"],
+    ["Users can delete own bookmarks", "DELETE", "USING (auth.uid() = user_id)"],
+    ["Admins can manage all bookmarks", "ALL", "USING (public.is_admin())"],
+  ];
+  for (const [name, action, clause] of bookmarksPolicies) {
+    await run(
+      `policy: ${name}`,
+      `DO $$ BEGIN
+         DROP POLICY IF EXISTS "${name}" ON public.bookmarks;
+         CREATE POLICY "${name}" ON public.bookmarks FOR ${action} ${clause};
+       END $$;`
+    );
+  }
+
+  // ============================================================
   // 9. トリガー・関数
   // ============================================================
   console.log("\n9. トリガー・関数");
@@ -660,7 +735,7 @@ async function run(label, sql) {
   const expectedTables = [
     "profiles", "courses", "lessons", "articles",
     "purchases", "reviews", "seller_profiles", "withdrawal_requests",
-    "stripe_payments", "banners", "likes",
+    "stripe_payments", "banners", "likes", "article_views", "bookmarks",
   ];
   const existingTables = tables.map((r) => r.tablename);
   const missing = expectedTables.filter((t) => !existingTables.includes(t));

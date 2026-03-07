@@ -11,7 +11,30 @@ import { ArticleBody } from "./article-body";
 import { ReviewForm } from "./review-form";
 import { ReviewList } from "./review-list";
 import { LikeButton } from "./like-button";
+import { BookmarkButton } from "./bookmark-button";
+import { RecordView } from "./record-view";
 import { getCharCount } from "@/lib/article-utils";
+
+/** Try slug first, then UUID */
+async function findArticle(supabase: Awaited<ReturnType<typeof createClient>>, idOrSlug: string) {
+  // Try slug first
+  const { data: bySlug } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("slug", idOrSlug)
+    .eq("published", true)
+    .single();
+  if (bySlug) return bySlug;
+
+  // Fallback to UUID
+  const { data: byId } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("id", idOrSlug)
+    .eq("published", true)
+    .single();
+  return byId;
+}
 
 export async function generateMetadata({
   params,
@@ -20,11 +43,24 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: article } = await supabase
+
+  // Try slug first, then UUID (metadata only needs title/content)
+  let article: { title: string; content: string } | null = null;
+  const { data: bySlug } = await supabase
     .from("articles")
     .select("title, content")
-    .eq("id", id)
+    .eq("slug", id)
     .single();
+  if (bySlug) {
+    article = bySlug;
+  } else {
+    const { data: byId } = await supabase
+      .from("articles")
+      .select("title, content")
+      .eq("id", id)
+      .single();
+    article = byId;
+  }
 
   if (!article) return { title: "記事が見つかりません" };
 
@@ -122,12 +158,7 @@ export default async function ArticlePage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: article } = await supabase
-    .from("articles")
-    .select("*")
-    .eq("id", id)
-    .eq("published", true)
-    .single();
+  const article = await findArticle(supabase, id);
 
   if (!article) notFound();
 
@@ -175,6 +206,7 @@ export default async function ArticlePage({
 
   // Check if current user has liked
   let hasLiked = false;
+  let hasBookmarked = false;
   if (user) {
     const { data: like } = await supabase
       .from("likes")
@@ -183,6 +215,14 @@ export default async function ArticlePage({
       .eq("article_id", id)
       .single();
     hasLiked = !!like;
+
+    const { data: bookmark } = await supabase
+      .from("bookmarks")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("article_id", id)
+      .single();
+    hasBookmarked = !!bookmark;
   }
 
   const charCount = getCharCount(article.content);
@@ -191,6 +231,7 @@ export default async function ArticlePage({
 
   return (
     <div className="min-h-screen bg-muted/30">
+      {user && <RecordView articleId={id} />}
       <Header />
 
       {/* Hero Image */}
@@ -239,6 +280,11 @@ export default async function ArticlePage({
                 articleId={id}
                 initialLiked={hasLiked}
                 initialCount={article.like_count ?? 0}
+                isLoggedIn={!!user}
+              />
+              <BookmarkButton
+                articleId={id}
+                initialBookmarked={hasBookmarked}
                 isLoggedIn={!!user}
               />
             </div>

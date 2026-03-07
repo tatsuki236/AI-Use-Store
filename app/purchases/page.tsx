@@ -15,7 +15,7 @@ export default async function PurchasesPage() {
   const { data: purchases } = await supabase
     .from("purchases")
     .select(
-      "id, status, created_at, article_id, articles(title)"
+      "id, status, created_at, article_id, articles(title, slug)"
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
@@ -41,9 +41,9 @@ export default async function PurchasesPage() {
         ) : (
           <div className="space-y-3">
             {purchases.map((purchase) => {
-              const articleData = purchase.articles as unknown as { title: string } | null;
+              const articleData = purchase.articles as unknown as { title: string; slug?: string } | null;
               const title = articleData?.title;
-              const href = `/articles/${purchase.article_id}`;
+              const href = `/articles/${articleData?.slug || purchase.article_id}`;
 
               return (
                 <Link

@@ -15,6 +15,7 @@ export type ArticleCardData = {
   review_count?: number;
   like_count?: number;
   category?: string;
+  slug?: string;
 };
 
 export function ArticleCard({ article }: { article: ArticleCardData }) {
@@ -25,7 +26,7 @@ export function ArticleCard({ article }: { article: ArticleCardData }) {
   const isPopular = (article.purchase_count ?? 0) >= 5;
 
   return (
-    <Link href={`/articles/${article.id}`} className="group block h-full">
+    <Link href={`/articles/${article.slug || article.id}`} className="group block h-full">
       <article className="bg-card rounded-xl overflow-hidden border border-border/60 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col">
         {/* Thumbnail */}
         <div className="relative">

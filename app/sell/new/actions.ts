@@ -34,6 +34,8 @@ export async function createUserArticle(formData: FormData) {
   const is_free = formData.get("is_free") === "on";
   const thumbnail_url = (formData.get("thumbnail_url") as string) || null;
   const action = formData.get("action") as string;
+  const slugRaw = (formData.get("slug") as string)?.trim();
+  const slug = slugRaw || null;
 
   const status = action === "submit" ? "pending_review" : "draft";
   const category = await categorizeArticle(title, content);
@@ -49,6 +51,7 @@ export async function createUserArticle(formData: FormData) {
     status,
     rating: 0,
     category,
+    slug,
   });
 
   if (error) throw new Error("記事の作成に失敗しました: " + error.message);

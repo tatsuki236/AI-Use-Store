@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   // Fetch article
   const { data: article } = await supabase
     .from("articles")
-    .select("id, title, price, is_free, published")
+    .select("id, title, price, is_free, published, slug")
     .eq("id", articleId)
     .eq("published", true)
     .single();
@@ -69,8 +69,8 @@ export async function POST(req: NextRequest) {
       article_id: article.id,
       purchase_id: existingPurchase?.id || "",
     },
-    success_url: `${origin}/articles/${article.id}?purchased=true`,
-    cancel_url: `${origin}/articles/${article.id}`,
+    success_url: `${origin}/articles/${article.slug || article.id}?purchased=true`,
+    cancel_url: `${origin}/articles/${article.slug || article.id}`,
   });
 
   return NextResponse.json({ url: session.url });

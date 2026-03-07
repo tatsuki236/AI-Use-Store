@@ -77,6 +77,12 @@ export function MobileMenuButton({
                   <Link href="/account" onClick={close} className={linkClass}>
                     アカウント
                   </Link>
+                  <Link href="/history" onClick={close} className={linkClass}>
+                    閲覧履歴
+                  </Link>
+                  <Link href="/bookmarks" onClick={close} className={linkClass}>
+                    ブックマーク
+                  </Link>
                   <Link href="/purchases" onClick={close} className={linkClass}>
                     購入履歴
                   </Link>

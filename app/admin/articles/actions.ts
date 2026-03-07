@@ -26,11 +26,14 @@ export async function createArticle(formData: FormData) {
   const published = formData.get("published") === "on";
   const thumbnail_url = (formData.get("thumbnail_url") as string) || null;
 
+  const slugRaw = (formData.get("slug") as string)?.trim();
+  const slug = slugRaw || null;
+
   const status = published ? "published" : "draft";
   const category = await categorizeArticle(title, content);
   const { error } = await supabase
     .from("articles")
-    .insert({ title, content, price: is_free ? 0 : price, rating, is_free, published, thumbnail_url, status, author_id: user!.id, category });
+    .insert({ title, content, price: is_free ? 0 : price, rating, is_free, published, thumbnail_url, status, author_id: user!.id, category, slug });
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin/articles");
@@ -47,11 +50,14 @@ export async function updateArticle(articleId: string, formData: FormData) {
   const published = formData.get("published") === "on";
   const thumbnail_url = (formData.get("thumbnail_url") as string) || null;
 
+  const slugRaw = (formData.get("slug") as string)?.trim();
+  const slug = slugRaw || null;
+
   const status = published ? "published" : "draft";
   const category = await categorizeArticle(title, content);
   const { error } = await supabase
     .from("articles")
-    .update({ title, content, price: is_free ? 0 : price, rating, is_free, published, thumbnail_url, status, updated_at: new Date().toISOString(), category })
+    .update({ title, content, price: is_free ? 0 : price, rating, is_free, published, thumbnail_url, status, updated_at: new Date().toISOString(), category, slug })
     .eq("id", articleId);
 
   if (error) throw new Error(error.message);
