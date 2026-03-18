@@ -13,7 +13,7 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
     <section className="relative overflow-hidden min-h-[600px] sm:min-h-[700px] lg:min-h-[85vh] flex items-center bg-black">
       {/* Background video */}
       <video
-        className="absolute inset-0 z-0 w-full h-full object-cover opacity-80"
+        className="absolute inset-0 z-0 w-full h-full object-cover opacity-90"
         src="/images/動画ループアニメーションの調整.mp4"
         autoPlay
         loop
@@ -27,7 +27,7 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
         className="absolute inset-0 z-0"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.8) 100%)",
+            "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.8) 100%)",
         }}
       />
 
@@ -36,7 +36,7 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
         className="absolute inset-0 z-0"
         style={{
           background:
-            "radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.7) 100%)",
+            "radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.4) 100%)",
         }}
       />
 
