@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   },
   description:
     "実践的なAI・プログラミングスキルを、記事スタイルのレッスンで学べる学習プラットフォーム",
+  icons: {
+    icon: "/images/logo.png",
+    apple: "/images/logo.png",
+  },
   openGraph: {
     title: "AI USE STORE",
     description:
