@@ -84,10 +84,7 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
           >
             学びを、もっと
             <br className="sm:hidden" />
-            <span
-              className="bg-gradient-to-r from-blue-400 to-orange-400 bg-clip-text text-transparent"
-              style={accentShadow}
-            >
+            <span className="text-orange-400" style={headingShadow}>
               自由
             </span>
             に。
