@@ -148,8 +148,8 @@ export default async function HomePage({
                           <img src={article.thumbnail_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         </div>
                       ) : (
-                        <div className={`aspect-[16/10] bg-gradient-to-br ${getGradient(article.title)} flex items-center justify-center`}>
-                          <span className="text-xl font-bold text-white/80 drop-shadow-md">AI</span>
+                        <div className="aspect-[16/10] bg-white flex items-center justify-center p-4">
+                          <img src="/images/logo.png" alt="AI USE STORE" className="w-full h-full object-contain" />
                         </div>
                       )}
                       <div className="p-3 flex-1 flex flex-col">
@@ -199,8 +199,8 @@ export default async function HomePage({
                     />
                   </div>
                 ) : (
-                  <div className={`aspect-[4/3] md:aspect-auto bg-gradient-to-br ${getGradient(featured.title)} flex items-center justify-center`}>
-                    <span className="text-7xl drop-shadow-lg">AI</span>
+                  <div className="aspect-[4/3] md:aspect-auto bg-white flex items-center justify-center p-8">
+                    <img src="/images/logo.png" alt="AI USE STORE" className="w-full h-full object-contain" />
                   </div>
                 )}
                 <div className="p-6 sm:p-8 flex flex-col justify-center">
@@ -293,11 +293,8 @@ export default async function HomePage({
         <div className="container mx-auto max-w-6xl px-4 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-xs">A</span>
-                </div>
-                <span className="font-bold text-base">AiUseStore</span>
+              <div className="mb-3">
+                <img src="/images/logo-header.png" alt="AI USE STORE" className="h-10 w-auto object-contain" />
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 AIスキルを、実践的な記事で学べるAI特化型ナレッジプラットフォーム。

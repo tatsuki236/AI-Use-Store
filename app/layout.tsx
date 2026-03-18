@@ -20,14 +20,23 @@ export const metadata: Metadata = {
   description:
     "実践的なAI・プログラミングスキルを、記事スタイルのレッスンで学べる学習プラットフォーム",
   openGraph: {
-    title: "AiUseStore",
+    title: "AI USE STORE",
     description:
       "実践的なAI・プログラミングスキルを、記事スタイルのレッスンで学べる学習プラットフォーム",
     type: "website",
     locale: "ja_JP",
+    images: [
+      {
+        url: "https://aiusestore.com/images/ogp.png",
+        width: 1200,
+        height: 630,
+        alt: "AI USE STORE",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
+    images: ["https://aiusestore.com/images/ogp.png"],
   },
 };
 

@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Header } from "@/components/header";
 
 const legalInfo = [
-  { label: "販売業者", value: "AiUseStore 運営事務局", icon: "🏢" },
-  { label: "運営責任者", value: "代表者名（準備中）", icon: "👤" },
-  { label: "所在地", value: "東京都（詳細はお問い合わせください）", icon: "📍" },
+  { label: "販売業者", value: "株式会社Keymarks", icon: "🏢" },
+  { label: "運営責任者", value: "代表取締役", icon: "👤" },
+  { label: "所在地", value: "〒107-0062 東京都港区南青山3-8-40 青山センタービル 2F 219号", icon: "📍" },
   {
     label: "連絡先",
     value: "info@aiusestore.com",

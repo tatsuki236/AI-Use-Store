@@ -39,8 +39,12 @@ export function ArticleCard({ article }: { article: ArticleCardData }) {
               />
             </div>
           ) : (
-            <div className={`aspect-[16/10] bg-gradient-to-br ${getGradient(article.title)} flex items-center justify-center`}>
-              <span className="text-2xl font-bold text-white/80 drop-shadow-md">AI</span>
+            <div className="aspect-[16/10] bg-white flex items-center justify-center p-4">
+              <img
+                src="/images/logo.png"
+                alt="AI USE STORE"
+                className="w-full h-full object-contain"
+              />
             </div>
           )}
 

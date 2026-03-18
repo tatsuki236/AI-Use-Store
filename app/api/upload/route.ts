@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = [
   "image/jpeg",
   "image/png",
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
-        { error: "ファイルサイズは5MB以下にしてください" },
+        { error: "ファイルサイズは50MB以下にしてください" },
         { status: 400 }
       );
     }

@@ -14,7 +14,7 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
       {/* Background video */}
       <video
         className="absolute inset-0 z-0 w-full h-full object-cover opacity-80"
-        src="/images/hero-bg.mp4"
+        src="/images/動画ループアニメーションの調整.mp4"
         autoPlay
         loop
         muted
@@ -95,19 +95,23 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
             >
               記事を探す
             </Link>
-            {/* スマホ: 記事を探す + ログイン/記事投稿 */}
-            <Link
-              href="/search?q="
-              className="sm:hidden inline-flex items-center justify-center h-12 rounded-full px-8 text-base font-semibold bg-white text-gray-900 shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(34,211,238,0.45)] transition-all duration-200"
-            >
-              記事を探す
-            </Link>
-            <Link
-              href={isLoggedIn ? "/sell/new" : "/login"}
-              className="sm:hidden inline-flex items-center justify-center h-12 rounded-full px-7 text-base font-medium text-white border border-white/30 backdrop-blur-sm hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-200"
-            >
-              {isLoggedIn ? "記事投稿" : "ログイン"}
-            </Link>
+            {/* スマホ: 未ログイン時のみ表示 */}
+            {!isLoggedIn && (
+              <>
+                <Link
+                  href="/search?q="
+                  className="sm:hidden inline-flex items-center justify-center h-12 rounded-full px-8 text-base font-semibold bg-white text-gray-900 shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(34,211,238,0.45)] transition-all duration-200"
+                >
+                  記事を探す
+                </Link>
+                <Link
+                  href="/login"
+                  className="sm:hidden inline-flex items-center justify-center h-12 rounded-full px-7 text-base font-medium text-white border border-white/30 backdrop-blur-sm hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-200"
+                >
+                  ログイン
+                </Link>
+              </>
+            )}
           </div>
         </div>
 

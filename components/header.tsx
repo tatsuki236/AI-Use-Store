@@ -40,19 +40,14 @@ export async function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border/50">
       {/* ===== Desktop Header ===== */}
-      <div className="hidden sm:grid container mx-auto grid-cols-[auto_1fr_auto] items-center h-14 px-4 gap-4">
+      <div className="hidden sm:flex container mx-auto items-center h-16 px-4 gap-4">
         {/* Left: Logo */}
-        <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">AI</span>
-          </div>
-          <span className="font-bold text-lg tracking-tight">
-            AiUseStore
-          </span>
+        <Link href="/" className="flex items-center flex-shrink-0">
+          <img src="/images/logo-header.png" alt="AI USE STORE" className="h-12 w-auto object-contain" />
         </Link>
 
         {/* Center: Search */}
-        <div className="max-w-lg mx-auto w-full">
+        <div className="flex-1 max-w-lg mx-auto">
           <SearchBox />
         </div>
 
@@ -221,73 +216,79 @@ export async function Header() {
       {/* ===== Mobile Header (Amazon-style) ===== */}
       <div className="sm:hidden relative">
         {/* Row 1: Menu | Logo | Create | Login | Cart */}
-        <div className="flex items-center h-12 px-3 gap-1.5">
+        <div className="flex items-center h-14 px-3 gap-1.5">
           {/* Hamburger menu */}
           <MobileMenuButton isAdmin={isAdmin} isLoggedIn={!!user} sellerStatus={sellerStatus} />
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-1.5 flex-1 min-w-0">
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center flex-shrink-0">
-              <span className="text-primary-foreground font-bold text-xs">AI</span>
-            </div>
-            <span className="font-bold text-base tracking-tight truncate">
-              AiUseStore
-            </span>
+          <Link href="/" className="flex items-center flex-1 min-w-0">
+            <img src="/images/logo-header.png" alt="AI USE STORE" className="h-10 w-auto object-contain" />
           </Link>
 
-          {/* Create Article / 出品 */}
-          <Link
-            href={user ? (sellerStatus === "approved" ? "/sell/new" : "/seller/register") : "/seller/register"}
-            className="flex-shrink-0 h-7 px-2.5 flex items-center gap-1 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
-            aria-label="投稿"
-          >
-            <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            <span className="text-xs font-semibold text-primary">投稿</span>
-          </Link>
-
-          {/* Login / Avatar */}
           {user ? (
-            <Link href="/account" className="flex-shrink-0">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="アバター"
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-secondary-foreground">
-                  {user.email?.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </Link>
+            <>
+              {/* 投稿 */}
+              <Link
+                href={sellerStatus === "approved" ? "/sell/new" : "/seller/register"}
+                className="flex-shrink-0 h-7 px-2.5 flex items-center gap-1 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                aria-label="投稿"
+              >
+                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                <span className="text-xs font-semibold text-primary">投稿</span>
+              </Link>
+
+              {/* Cart */}
+              <Link
+                href="/purchases"
+                className="flex-shrink-0 w-8 h-8 flex items-center justify-center relative"
+                aria-label="購入履歴"
+              >
+                <svg className="w-[22px] h-[22px] text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                </svg>
+                {cartCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-bold leading-none px-1">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                )}
+              </Link>
+
+              {/* Avatar → マイページ */}
+              <Link href="/account" className="flex-shrink-0">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="アバター"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-secondary-foreground">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </Link>
+            </>
           ) : (
             <>
+              {/* ログイン */}
+              <Link
+                href="/login"
+                className="flex-shrink-0 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ログイン
+              </Link>
+
+              {/* 新規登録 */}
               <Link
                 href="/signup"
-                className="flex-shrink-0 h-7 px-2.5 flex items-center rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+                className="flex-shrink-0 h-7 px-3 flex items-center rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
               >
-                会員登録
+                新規登録
               </Link>
             </>
           )}
-
-          {/* Cart */}
-          <Link
-            href={user ? "/purchases" : "/login"}
-            className="flex-shrink-0 w-8 h-8 flex items-center justify-center relative"
-            aria-label="購入履歴"
-          >
-            <svg className="w-[22px] h-[22px] text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-            </svg>
-            {cartCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-bold leading-none px-1">
-                {cartCount > 99 ? "99+" : cartCount}
-              </span>
-            )}
-          </Link>
         </div>
 
         {/* Row 2: Amazon-style search bar */}

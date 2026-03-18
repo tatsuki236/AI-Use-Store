@@ -236,16 +236,22 @@ export default async function ArticlePage({
 
       {/* Hero Image */}
       {article.thumbnail_url ? (
-        <div className="w-full max-h-[400px] overflow-hidden">
+        <div className="container mx-auto max-w-3xl px-4 pt-6">
           <img
             src={article.thumbnail_url}
             alt=""
-            className="w-full h-full object-cover"
+            className="w-full max-h-[300px] object-contain rounded-2xl"
           />
         </div>
       ) : (
-        <div className={`w-full h-48 sm:h-72 bg-gradient-to-br ${getThumbnailColor(article.title)} flex items-center justify-center`}>
-          <span className="text-6xl sm:text-8xl drop-shadow-lg">{getArticleIcon(article.title)}</span>
+        <div className="container mx-auto max-w-3xl px-4 pt-6">
+          <div className="h-48 sm:h-56 bg-white rounded-2xl flex items-center justify-center">
+            <img
+              src="/images/logo.png"
+              alt="AI USE STORE"
+              className="w-1/2 max-h-[60%] object-contain opacity-80"
+            />
+          </div>
         </div>
       )}
 

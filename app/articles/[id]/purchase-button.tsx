@@ -14,9 +14,18 @@ export function PurchaseButton({ articleId }: { articleId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ articleId }),
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`サーバーエラー (${res.status}): ${text.slice(0, 200) || "空のレスポンス"}`);
+      }
       if (!res.ok) {
         throw new Error(data.error || "エラーが発生しました");
+      }
+      if (!data.url) {
+        throw new Error("決済URLの取得に失敗しました");
       }
       // Redirect to Stripe Checkout
       window.location.href = data.url;

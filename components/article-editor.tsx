@@ -122,7 +122,7 @@ const CODE_LANGUAGES = [
 ];
 
 async function uploadImage(file: File): Promise<string | null> {
-  const MAX_SIZE = 5 * 1024 * 1024;
+  const MAX_SIZE = 50 * 1024 * 1024;
   const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
   if (!ALLOWED.includes(file.type)) {
@@ -130,7 +130,7 @@ async function uploadImage(file: File): Promise<string | null> {
     return null;
   }
   if (file.size > MAX_SIZE) {
-    alert("ファイルサイズは5MB以下にしてください");
+    alert("ファイルサイズは50MB以下にしてください");
     return null;
   }
 
@@ -694,6 +694,9 @@ export function ArticleEditor({
 
             <div className="space-y-2">
               <Label>サムネイル画像</Label>
+              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                サムネイルを設定すると記事一覧での見栄えが良くなります。未設定の場合はデフォルトのロゴ画像が表示されます。
+              </p>
               <div className="flex items-center gap-2">
                 <label
                   className={`inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3 cursor-pointer ${uploading ? "opacity-50 pointer-events-none" : ""}`}
