@@ -8,12 +8,26 @@ type HeroStats = {
   satisfaction_percent: number;
 } | null;
 
+/* ── 共通テキストシャドウ ── */
+const headingShadow = {
+  textShadow:
+    "0 2px 4px rgba(0,0,0,0.9), 0 8px 24px rgba(0,0,0,0.6), 0 0 60px rgba(0,0,0,0.4)",
+};
+const bodyShadow = {
+  textShadow:
+    "0 1px 3px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.5)",
+};
+const accentShadow = {
+  filter:
+    "drop-shadow(0 2px 4px rgba(0,0,0,0.9)) drop-shadow(0 8px 24px rgba(0,0,0,0.6)) drop-shadow(0 0 12px rgba(255,255,255,0.15))",
+};
+
 export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLoggedIn?: boolean }) {
   return (
     <section className="relative overflow-hidden min-h-[600px] sm:min-h-[700px] lg:min-h-[85vh] flex items-center bg-black">
-      {/* Background video */}
+      {/* Background video — フル鮮明 */}
       <video
-        className="absolute inset-0 z-0 w-full h-full object-cover opacity-90"
+        className="absolute inset-0 z-0 w-full h-full object-cover"
         src="/images/hi-ro.mp4"
         autoPlay
         loop
@@ -22,21 +36,24 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
         aria-hidden="true"
       />
 
-      {/* Dark overlay for text readability */}
+      {/* 極薄グローバルオーバーレイ（10%のみ） */}
+      <div className="absolute inset-0 z-[1] bg-black/10" />
+
+      {/* テキスト背後の局所スクリム — 左下に向かって暗くなるラジアル */}
       <div
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-[1]"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.8) 100%)",
+            "radial-gradient(ellipse 70% 80% at 25% 55%, rgba(0,0,0,0.55) 0%, transparent 70%)",
         }}
       />
 
-      {/* Vignette effect */}
+      {/* 下部フェード（ページコンテンツとの接続） */}
       <div
-        className="absolute inset-0 z-0"
+        className="absolute bottom-0 left-0 right-0 h-40 z-[1]"
         style={{
           background:
-            "radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.4) 100%)",
+            "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)",
         }}
       />
 
@@ -47,8 +64,11 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
           className="hero-fade-up mb-5"
           style={{ animation: "hero-fade-up 0.6s ease-out both" }}
         >
-          <span className="inline-flex items-center gap-2 font-mono text-xs tracking-widest uppercase text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.4)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse shadow-[0_0_6px_rgba(251,146,60,0.6)]" />
+          <span
+            className="inline-flex items-center gap-2 font-mono text-xs tracking-widest uppercase text-orange-400"
+            style={accentShadow}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse shadow-[0_0_8px_rgba(251,146,60,0.8)]" />
             AI-Powered Knowledge Platform
           </span>
         </div>
@@ -57,11 +77,17 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
           {/* Main heading */}
           <h1
             className="hero-fade-up text-4xl sm:text-6xl font-black tracking-tight leading-[1.1] text-white"
-            style={{ animation: "hero-fade-up 0.7s ease-out 0.1s both" }}
+            style={{
+              animation: "hero-fade-up 0.7s ease-out 0.1s both",
+              ...headingShadow,
+            }}
           >
             学びを、もっと
             <br className="sm:hidden" />
-            <span className="bg-gradient-to-r from-blue-400 to-orange-400 bg-clip-text text-transparent">
+            <span
+              className="bg-gradient-to-r from-blue-400 to-orange-400 bg-clip-text text-transparent"
+              style={accentShadow}
+            >
               自由
             </span>
             に。
@@ -69,8 +95,11 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
 
           {/* Subheading */}
           <p
-            className="hero-fade-up mt-5 text-base sm:text-lg text-gray-400 leading-relaxed max-w-xl"
-            style={{ animation: "hero-fade-up 0.7s ease-out 0.2s both" }}
+            className="hero-fade-up mt-5 text-base sm:text-lg text-gray-200 leading-relaxed max-w-xl"
+            style={{
+              animation: "hero-fade-up 0.7s ease-out 0.2s both",
+              ...bodyShadow,
+            }}
           >
             AIスキルを、実践的な記事で学べる。
             <br className="hidden sm:inline" />
@@ -85,13 +114,13 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
             {/* PC: 無料で始める + 記事を探す */}
             <Link
               href="/signup"
-              className="hidden sm:inline-flex items-center justify-center h-12 rounded-full px-8 text-base font-semibold bg-orange-500 text-white shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-[0_0_30px_rgba(249,115,22,0.45)] transition-all duration-200"
+              className="hidden sm:inline-flex items-center justify-center h-12 rounded-full px-8 text-base font-semibold bg-orange-500 text-white shadow-[0_4px_24px_rgba(249,115,22,0.4)] hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-[0_4px_32px_rgba(249,115,22,0.55)] transition-all duration-200"
             >
               無料で始める
             </Link>
             <Link
               href="/search?q="
-              className="hidden sm:inline-flex items-center justify-center h-12 rounded-full px-7 text-base font-medium text-white border border-white/30 backdrop-blur-sm hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-200"
+              className="hidden sm:inline-flex items-center justify-center h-12 rounded-full px-7 text-base font-medium text-white border border-white/40 backdrop-blur-md bg-white/5 shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:bg-white/15 hover:-translate-y-0.5 transition-all duration-200"
             >
               記事を探す
             </Link>
@@ -100,13 +129,13 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
               <>
                 <Link
                   href="/search?q="
-                  className="sm:hidden inline-flex items-center justify-center h-12 rounded-full px-8 text-base font-semibold bg-orange-500 text-white shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-[0_0_30px_rgba(249,115,22,0.45)] transition-all duration-200"
+                  className="sm:hidden inline-flex items-center justify-center h-12 rounded-full px-8 text-base font-semibold bg-orange-500 text-white shadow-[0_4px_24px_rgba(249,115,22,0.4)] hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-[0_4px_32px_rgba(249,115,22,0.55)] transition-all duration-200"
                 >
                   記事を探す
                 </Link>
                 <Link
                   href="/login"
-                  className="sm:hidden inline-flex items-center justify-center h-12 rounded-full px-7 text-base font-medium text-white border border-white/30 backdrop-blur-sm hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-200"
+                  className="sm:hidden inline-flex items-center justify-center h-12 rounded-full px-7 text-base font-medium text-white border border-white/40 backdrop-blur-md bg-white/5 shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:bg-white/15 hover:-translate-y-0.5 transition-all duration-200"
                 >
                   ログイン
                 </Link>
@@ -115,34 +144,43 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
           </div>
         </div>
 
-        {/* Trust Signals */}
+        {/* Trust Signals — グラスモーフィズム強化 */}
         <div
           className="hero-fade-up mt-10 grid grid-cols-3 gap-3 sm:gap-5 max-w-lg"
           style={{ animation: "hero-fade-up 0.7s ease-out 0.5s both" }}
         >
-          <div className="rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 px-4 py-4 sm:px-5 sm:py-5 hover:bg-white/10 hover:-translate-y-1 transition-all duration-300 text-center">
-            <span className="block text-2xl sm:text-3xl font-extrabold text-blue-400 leading-none drop-shadow-[0_0_8px_rgba(96,165,250,0.3)]">
+          <div className="rounded-2xl bg-black/30 backdrop-blur-xl border border-white/15 px-4 py-4 sm:px-5 sm:py-5 shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:bg-black/40 hover:-translate-y-1 transition-all duration-300 text-center">
+            <span
+              className="block text-2xl sm:text-3xl font-extrabold text-blue-400 leading-none"
+              style={accentShadow}
+            >
               {heroStats?.article_count?.toLocaleString() ?? "0"}
             </span>
-            <span className="block mt-1.5 text-[11px] sm:text-xs text-gray-400 font-medium">
+            <span className="block mt-1.5 text-[11px] sm:text-xs text-gray-300 font-medium" style={bodyShadow}>
               公開コンテンツ
             </span>
           </div>
-          <div className="rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 px-4 py-4 sm:px-5 sm:py-5 hover:bg-white/10 hover:-translate-y-1 transition-all duration-300 text-center">
-            <span className="block text-2xl sm:text-3xl font-extrabold text-blue-400 leading-none drop-shadow-[0_0_8px_rgba(96,165,250,0.3)]">
+          <div className="rounded-2xl bg-black/30 backdrop-blur-xl border border-white/15 px-4 py-4 sm:px-5 sm:py-5 shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:bg-black/40 hover:-translate-y-1 transition-all duration-300 text-center">
+            <span
+              className="block text-2xl sm:text-3xl font-extrabold text-blue-400 leading-none"
+              style={accentShadow}
+            >
               {heroStats?.user_count?.toLocaleString() ?? "0"}
             </span>
-            <span className="block mt-1.5 text-[11px] sm:text-xs text-gray-400 font-medium">
+            <span className="block mt-1.5 text-[11px] sm:text-xs text-gray-300 font-medium" style={bodyShadow}>
               登録ユーザー
             </span>
           </div>
-          <div className="rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 px-4 py-4 sm:px-5 sm:py-5 hover:bg-white/10 hover:-translate-y-1 transition-all duration-300 text-center">
-            <span className="block text-2xl sm:text-3xl font-extrabold text-orange-400 leading-none drop-shadow-[0_0_8px_rgba(251,146,60,0.3)]">
+          <div className="rounded-2xl bg-black/30 backdrop-blur-xl border border-white/15 px-4 py-4 sm:px-5 sm:py-5 shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:bg-black/40 hover:-translate-y-1 transition-all duration-300 text-center">
+            <span
+              className="block text-2xl sm:text-3xl font-extrabold text-orange-400 leading-none"
+              style={accentShadow}
+            >
               {heroStats?.satisfaction_percent != null
                 ? `${heroStats.satisfaction_percent}%`
                 : "--%"}
             </span>
-            <span className="block mt-1.5 text-[11px] sm:text-xs text-gray-400 font-medium">
+            <span className="block mt-1.5 text-[11px] sm:text-xs text-gray-300 font-medium" style={bodyShadow}>
               学習満足度
             </span>
           </div>
