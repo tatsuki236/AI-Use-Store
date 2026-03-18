@@ -42,8 +42,8 @@ export function ArticleCard({ article }: { article: ArticleCardData }) {
             <div className="aspect-[16/10] bg-white flex items-center justify-center p-4">
               <img
                 src="/images/logo.png"
-                alt="AI USE STORE"
-                className="w-full h-full object-contain"
+                alt="AiUseStore"
+                className="max-w-full max-h-full object-contain"
               />
             </div>
           )}

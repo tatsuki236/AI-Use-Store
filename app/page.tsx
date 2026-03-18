@@ -149,7 +149,7 @@ export default async function HomePage({
                         </div>
                       ) : (
                         <div className="aspect-[16/10] bg-white flex items-center justify-center p-4">
-                          <img src="/images/logo.png" alt="AI USE STORE" className="w-full h-full object-contain" />
+                          <img src="/images/logo.png" alt="AiUseStore" className="max-w-full max-h-full object-contain" />
                         </div>
                       )}
                       <div className="p-3 flex-1 flex flex-col">
@@ -200,7 +200,7 @@ export default async function HomePage({
                   </div>
                 ) : (
                   <div className="aspect-[4/3] md:aspect-auto bg-white flex items-center justify-center p-8">
-                    <img src="/images/logo.png" alt="AI USE STORE" className="w-full h-full object-contain" />
+                    <img src="/images/logo.png" alt="AiUseStore" className="max-w-full max-h-full object-contain" />
                   </div>
                 )}
                 <div className="p-6 sm:p-8 flex flex-col justify-center">
