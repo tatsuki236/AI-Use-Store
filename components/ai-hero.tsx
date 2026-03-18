@@ -14,7 +14,7 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
       {/* Background video */}
       <video
         className="absolute inset-0 z-0 w-full h-full object-cover opacity-90"
-        src="/images/動画ループアニメーションの調整.mp4"
+        src="/images/hi-ro.mp4"
         autoPlay
         loop
         muted
@@ -47,8 +47,8 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
           className="hero-fade-up mb-5"
           style={{ animation: "hero-fade-up 0.6s ease-out both" }}
         >
-          <span className="inline-flex items-center gap-2 font-mono text-xs tracking-widest uppercase text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_rgba(34,211,238,0.6)]" />
+          <span className="inline-flex items-center gap-2 font-mono text-xs tracking-widest uppercase text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.4)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse shadow-[0_0_6px_rgba(251,146,60,0.6)]" />
             AI-Powered Knowledge Platform
           </span>
         </div>
@@ -61,7 +61,7 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
           >
             学びを、もっと
             <br className="sm:hidden" />
-            <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-400 to-orange-400 bg-clip-text text-transparent">
               自由
             </span>
             に。
@@ -85,7 +85,7 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
             {/* PC: 無料で始める + 記事を探す */}
             <Link
               href="/signup"
-              className="hidden sm:inline-flex items-center justify-center h-12 rounded-full px-8 text-base font-semibold bg-white text-gray-900 shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(34,211,238,0.45)] transition-all duration-200"
+              className="hidden sm:inline-flex items-center justify-center h-12 rounded-full px-8 text-base font-semibold bg-orange-500 text-white shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-[0_0_30px_rgba(249,115,22,0.45)] transition-all duration-200"
             >
               無料で始める
             </Link>
@@ -100,7 +100,7 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
               <>
                 <Link
                   href="/search?q="
-                  className="sm:hidden inline-flex items-center justify-center h-12 rounded-full px-8 text-base font-semibold bg-white text-gray-900 shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(34,211,238,0.45)] transition-all duration-200"
+                  className="sm:hidden inline-flex items-center justify-center h-12 rounded-full px-8 text-base font-semibold bg-orange-500 text-white shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-[0_0_30px_rgba(249,115,22,0.45)] transition-all duration-200"
                 >
                   記事を探す
                 </Link>
@@ -121,7 +121,7 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
           style={{ animation: "hero-fade-up 0.7s ease-out 0.5s both" }}
         >
           <div className="rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 px-4 py-4 sm:px-5 sm:py-5 hover:bg-white/10 hover:-translate-y-1 transition-all duration-300 text-center">
-            <span className="block text-2xl sm:text-3xl font-extrabold text-cyan-400 leading-none drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
+            <span className="block text-2xl sm:text-3xl font-extrabold text-blue-400 leading-none drop-shadow-[0_0_8px_rgba(96,165,250,0.3)]">
               {heroStats?.article_count?.toLocaleString() ?? "0"}
             </span>
             <span className="block mt-1.5 text-[11px] sm:text-xs text-gray-400 font-medium">
@@ -129,7 +129,7 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
             </span>
           </div>
           <div className="rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 px-4 py-4 sm:px-5 sm:py-5 hover:bg-white/10 hover:-translate-y-1 transition-all duration-300 text-center">
-            <span className="block text-2xl sm:text-3xl font-extrabold text-cyan-400 leading-none drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
+            <span className="block text-2xl sm:text-3xl font-extrabold text-blue-400 leading-none drop-shadow-[0_0_8px_rgba(96,165,250,0.3)]">
               {heroStats?.user_count?.toLocaleString() ?? "0"}
             </span>
             <span className="block mt-1.5 text-[11px] sm:text-xs text-gray-400 font-medium">
@@ -137,7 +137,7 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
             </span>
           </div>
           <div className="rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 px-4 py-4 sm:px-5 sm:py-5 hover:bg-white/10 hover:-translate-y-1 transition-all duration-300 text-center">
-            <span className="block text-2xl sm:text-3xl font-extrabold text-emerald-400 leading-none drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]">
+            <span className="block text-2xl sm:text-3xl font-extrabold text-orange-400 leading-none drop-shadow-[0_0_8px_rgba(251,146,60,0.3)]">
               {heroStats?.satisfaction_percent != null
                 ? `${heroStats.satisfaction_percent}%`
                 : "--%"}
