@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     apple: "/images/logo.png",
   },
   openGraph: {
-    title: "AI USE STORE",
+    title: "AiUseStore",
     description:
       "実践的なAI・プログラミングスキルを、記事スタイルのレッスンで学べる学習プラットフォーム",
     type: "website",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
         url: "https://aiusestore.com/images/ogp.png",
         width: 1200,
         height: 630,
-        alt: "AI USE STORE",
+        alt: "AiUseStore",
       },
     ],
   },
