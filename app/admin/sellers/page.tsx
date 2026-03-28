@@ -54,13 +54,40 @@ export default async function AdminSellersPage() {
 
   const emailMap = new Map(profiles?.map((p) => [p.id, p.email]));
 
+  // 全ユーザー数を取得
+  const { count: totalUsers } = await supabase
+    .from("profiles")
+    .select("*", { count: "exact", head: true });
+
+  const pendingCount = sellers?.filter((s) => s.status === "pending").length ?? 0;
+  const approvedCount = sellers?.filter((s) => s.status === "approved").length ?? 0;
+  const rejectedCount = sellers?.filter((s) => s.status === "rejected").length ?? 0;
+
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold">出品者管理</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">出品者審査</h1>
         <p className="text-muted-foreground text-sm mt-1">
           出品者の審査・承認を行います
         </p>
+        <div className="flex flex-wrap gap-3 mt-3">
+          <Badge variant="outline" className="px-2.5 py-0.5">
+            申請数: {sellers?.length ?? 0} / {totalUsers ?? 0}人中
+          </Badge>
+          {pendingCount > 0 && (
+            <Badge variant="outline" className="px-2.5 py-0.5 text-yellow-600 border-yellow-600">
+              審査待ち: {pendingCount}
+            </Badge>
+          )}
+          <Badge variant="outline" className="px-2.5 py-0.5 text-emerald-600 border-emerald-600">
+            承認済み: {approvedCount}
+          </Badge>
+          {rejectedCount > 0 && (
+            <Badge variant="outline" className="px-2.5 py-0.5 text-red-600 border-red-600">
+              却下: {rejectedCount}
+            </Badge>
+          )}
+        </div>
       </div>
 
       {!sellers || sellers.length === 0 ? (
