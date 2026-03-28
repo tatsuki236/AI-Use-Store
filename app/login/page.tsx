@@ -344,11 +344,8 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-primary/8 via-transparent to-transparent" />
         <div className="relative flex flex-col justify-center px-12 xl:px-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 mb-10">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold">AI</span>
-            </div>
-            <span className="font-bold text-xl tracking-tight">AiUseStore</span>
+          <Link href="/" className="flex items-center mb-10">
+            <img src="/images/logo-header.png" alt="AI USE STORE" className="h-10 w-auto object-contain" />
           </Link>
 
           <h1 className="text-3xl font-extrabold tracking-tight leading-tight">
@@ -380,11 +377,8 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <Link href="/" className="inline-flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">AI</span>
-              </div>
-              <span className="font-bold text-xl tracking-tight">AiUseStore</span>
+            <Link href="/" className="inline-flex items-center">
+              <img src="/images/logo-header.png" alt="AI USE STORE" className="h-10 w-auto object-contain" />
             </Link>
           </div>
 
