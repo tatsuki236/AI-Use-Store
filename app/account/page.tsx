@@ -7,7 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { AvatarUploader } from "./avatar-uploader";
 import { DisplayNameEditor } from "./display-name-editor";
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const isNicknameSetup = params.setup === "nickname";
   const supabase = await createClient();
   const {
     data: { user },
@@ -89,6 +95,18 @@ export default async function AccountPage() {
         <h1 className="text-xl sm:text-2xl font-bold mb-6">アカウント</h1>
 
         <div className="space-y-4">
+          {/* Nickname setup banner */}
+          {isNicknameSetup && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-5">
+              <p className="text-sm font-medium text-blue-800">
+                ようこそ！まずはニックネームを設定しましょう。
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                サイト内で表示される名前です。あとから変更もできます。
+              </p>
+            </div>
+          )}
+
           {/* Avatar */}
           <div className="bg-card border rounded-xl p-4 sm:p-5">
             <AvatarUploader
@@ -98,8 +116,8 @@ export default async function AccountPage() {
           </div>
 
           {/* Display Name */}
-          <div className="bg-card border rounded-xl p-4 sm:p-5">
-            <DisplayNameEditor currentName={profile?.display_name ?? ""} />
+          <div className={`bg-card border rounded-xl p-4 sm:p-5${isNicknameSetup ? " ring-2 ring-blue-400" : ""}`}>
+            <DisplayNameEditor currentName={profile?.display_name ?? ""} highlight={isNicknameSetup} />
           </div>
 
           {/* Email */}

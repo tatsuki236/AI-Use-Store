@@ -50,9 +50,17 @@ export default async function SellerRegisterPage() {
               出品者登録の審査中です。
             </p>
             <p className="text-muted-foreground">
-              管理者による審査が完了するまでお待ちください。
+              通常1〜2営業日以内に審査を行います。<br />
               承認されると出品が可能になります。
             </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+              <Link href="/account">
+                <Button variant="outline" size="sm">アカウントページへ</Button>
+              </Link>
+              <Link href="/">
+                <Button variant="ghost" size="sm">トップへ戻る</Button>
+              </Link>
+            </div>
           </div>
         ) : seller?.status === "rejected" ? (
           <div className="space-y-6">
@@ -76,7 +84,7 @@ export default async function SellerRegisterPage() {
           <div className="space-y-6">
             <div className="bg-card border rounded-xl p-6">
               <p className="text-muted-foreground">
-                記事を出品するには、出品者登録が必要です。
+                記事を出品するには、登録方法（Google・メール）に関わらず出品者申請が必要です。
                 以下の情報を入力して申請してください。
                 管理者による審査後、出品が可能になります。
               </p>

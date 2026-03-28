@@ -59,15 +59,13 @@ export function MobileMenuButton({
               <Link href="/search" onClick={close} className={linkClass}>
                 記事を探す
               </Link>
-              {isLoggedIn && (
-                <Link
-                  href={sellerStatus === "approved" ? "/sell" : "/seller/register"}
-                  onClick={close}
-                  className={`${linkClass} text-primary`}
-                >
-                  出品する
-                </Link>
-              )}
+              <Link
+                href={!isLoggedIn ? "/login" : sellerStatus === "approved" ? "/sell" : "/seller/register"}
+                onClick={close}
+                className={`${linkClass} text-primary`}
+              >
+                {sellerStatus === "approved" ? "出品する" : "出品者登録"}
+              </Link>
 
               {/* Logged-in user sections */}
               {isLoggedIn && (

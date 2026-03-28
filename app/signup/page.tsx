@@ -48,7 +48,14 @@ export default function SignupPage() {
       setLoading(false);
       return;
     }
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: { display_name: nickname.trim() },
+      },
+    });
     if (error) {
       setError(error.message);
       setLoading(false);
@@ -93,6 +100,17 @@ export default function SignupPage() {
           <p className="mt-4 text-xs text-muted-foreground">
             メールが届かない場合は、迷惑メールフォルダもご確認ください。
           </p>
+
+          {/* Steps */}
+          <div className="mt-6 bg-muted/50 rounded-lg p-4 text-left">
+            <p className="text-xs font-medium mb-2">登録完了までの流れ</p>
+            <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside">
+              <li>確認メールのリンクをクリック</li>
+              <li>自動でログインされ、利用開始</li>
+              <li className="text-muted-foreground/70">出品したい方はログイン後に出品者申請へ</li>
+            </ol>
+          </div>
+
           <Link href="/login" className="block mt-6">
             <Button className="w-full h-11 rounded-xl font-semibold">
               ログインページへ
@@ -178,6 +196,9 @@ export default function SignupPage() {
                   <GoogleIcon />
                   <span className="ml-2">Googleで登録</span>
                 </Button>
+                <p className="text-[11px] text-muted-foreground text-center mt-2">
+                  メール認証なしですぐに利用開始できます
+                </p>
               </div>
 
               {/* Divider */}
@@ -195,6 +216,11 @@ export default function SignupPage() {
           )}
 
           {/* Section 2: Email Signup */}
+          {!inApp && (
+            <p className="text-[11px] text-muted-foreground text-center mb-4">
+              メール登録には確認メールによる認証が必要です
+            </p>
+          )}
           {error && (
             <div className={`text-sm text-destructive bg-destructive/10 p-3 rounded-lg mb-4 ${inApp ? "mt-8" : ""}`}>
               {error}
@@ -271,8 +297,17 @@ export default function SignupPage() {
             </Link>
           </div>
 
+          {/* Seller note */}
+          <div className="mt-6 bg-muted/50 rounded-lg p-3">
+            <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+              記事を出品するには、アカウント作成後に別途{" "}
+              <Link href="/seller/register" className="text-primary hover:underline font-medium">出品者申請</Link>
+              {" "}が必要です。
+            </p>
+          </div>
+
           {/* Section 4: Trust & Legal */}
-          <div className="mt-8 pt-6 border-t border-border/50">
+          <div className="mt-6 pt-6 border-t border-border/50">
             <p className="text-[10px] text-muted-foreground text-center leading-relaxed">
               登録することで{" "}
               <Link href="/terms" className="hover:text-foreground transition-colors underline">利用規約</Link>

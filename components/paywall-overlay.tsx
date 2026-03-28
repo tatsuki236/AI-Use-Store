@@ -35,10 +35,10 @@ export function PaywallOverlay({
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
               </svg>
-              承認待ち
+              決済処理中
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              購入リクエストは管理者に送信されました。承認されると全文をお読みいただけます。
+              決済を処理しています。完了すると全文をお読みいただけます。
             </p>
           </>
         ) : (

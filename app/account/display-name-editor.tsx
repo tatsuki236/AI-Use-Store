@@ -1,14 +1,21 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import { updateDisplayName } from "./actions";
 import { Button } from "@/components/ui/button";
 
-export function DisplayNameEditor({ currentName }: { currentName: string }) {
+export function DisplayNameEditor({ currentName, highlight }: { currentName: string; highlight?: boolean }) {
   const [name, setName] = useState(currentName);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (highlight && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [highlight]);
 
   const hasChanged = name !== currentName;
 
@@ -36,6 +43,7 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
       </p>
       <div className="flex gap-2">
         <input
+          ref={inputRef}
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}

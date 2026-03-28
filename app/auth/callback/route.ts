@@ -21,7 +21,17 @@ export async function GET(request: Request) {
           .eq("id", user.id)
           .single();
         if (!profile?.display_name?.trim()) {
-          return NextResponse.redirect(`${origin}/account`);
+          // Try to get nickname from user metadata (set during email+password signup)
+          const metaName = user.user_metadata?.display_name
+            || user.user_metadata?.full_name; // Google OAuth fallback
+          if (metaName?.trim()) {
+            await supabase
+              .from("profiles")
+              .update({ display_name: metaName.trim() })
+              .eq("id", user.id);
+            return NextResponse.redirect(`${origin}${next}`);
+          }
+          return NextResponse.redirect(`${origin}/account?setup=nickname`);
         }
       }
       return NextResponse.redirect(`${origin}${next}`);

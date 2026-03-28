@@ -4,7 +4,17 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM_EMAIL = "AiUseStore <info@aiusestore.com>";
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export async function sendSellerApprovedEmail(email: string, fullName: string) {
+  const safeName = escapeHtml(fullName);
   await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
@@ -19,7 +29,7 @@ export async function sendSellerApprovedEmail(email: string, fullName: string) {
             出品者アカウントが承認されました
           </h2>
           <p style="color: #374151; font-size: 14px; line-height: 1.7; margin: 0 0 16px;">
-            ${fullName} 様
+            ${safeName} 様
           </p>
           <p style="color: #374151; font-size: 14px; line-height: 1.7; margin: 0 0 24px;">
             出品者審査が完了し、アカウントが承認されました。<br>
@@ -45,6 +55,8 @@ export async function sendSellerRejectedEmail(
   fullName: string,
   reason: string
 ) {
+  const safeName = escapeHtml(fullName);
+  const safeReason = escapeHtml(reason);
   await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
@@ -59,14 +71,14 @@ export async function sendSellerRejectedEmail(
             出品者申請について
           </h2>
           <p style="color: #374151; font-size: 14px; line-height: 1.7; margin: 0 0 16px;">
-            ${fullName} 様
+            ${safeName} 様
           </p>
           <p style="color: #374151; font-size: 14px; line-height: 1.7; margin: 0 0 16px;">
             審査の結果、現時点では承認を見送らせていただきました。
           </p>
           <div style="background: #fef2f2; border-radius: 8px; padding: 16px; margin: 0 0 24px;">
             <p style="color: #991b1b; font-size: 13px; margin: 0;">
-              <strong>理由:</strong> ${reason}
+              <strong>理由:</strong> ${safeReason}
             </p>
           </div>
           <p style="color: #374151; font-size: 14px; line-height: 1.7; margin: 0;">
