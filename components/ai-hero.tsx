@@ -25,14 +25,11 @@ const accentShadow = {
 export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLoggedIn?: boolean }) {
   return (
     <section className="relative overflow-hidden min-h-[600px] sm:min-h-[700px] lg:min-h-[85vh] flex items-center bg-black">
-      {/* Background video — フル鮮明 */}
-      <video
+      {/* Background image */}
+      <img
         className="absolute inset-0 z-0 w-full h-full object-cover"
-        src="/images/hi-ro.mp4"
-        autoPlay
-        loop
-        muted
-        playsInline
+        src="/images/Gemini_Generated_Image_9sitm09sitm09sit.png"
+        alt=""
         aria-hidden="true"
       />
 
