@@ -24,10 +24,10 @@ const accentShadow = {
 
 export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLoggedIn?: boolean }) {
   return (
-    <section className="relative overflow-hidden flex items-center bg-black" style={{ aspectRatio: "16 / 9" }}>
-      {/* Background image — アスペクト比を保って全体表示 */}
+    <section className="relative overflow-hidden flex items-center bg-black" style={{ aspectRatio: "2 / 1" }}>
+      {/* Background image — 上寄せで下部を少しクロップ */}
       <img
-        className="absolute inset-0 z-0 w-full h-full object-contain"
+        className="absolute inset-0 z-0 w-full h-full object-cover object-top"
         src="/images/Gemini_Generated_Image_m91bvxm91bvxm91b.png"
         alt=""
         aria-hidden="true"
