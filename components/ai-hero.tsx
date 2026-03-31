@@ -28,7 +28,7 @@ export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLogg
       {/* Background image */}
       <img
         className="absolute inset-0 z-0 w-full h-full object-cover object-center"
-        src="/images/Gemini_Generated_Image_9sitm09sitm09sit.png"
+        src="/images/Gemini_Generated_Image_m91bvxm91bvxm91b.png"
         alt=""
         aria-hidden="true"
       />
