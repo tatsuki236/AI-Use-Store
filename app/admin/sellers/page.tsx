@@ -40,7 +40,7 @@ export default async function AdminSellersPage() {
 
   const { data: sellers } = await supabase
     .from("seller_profiles")
-    .select("*")
+    .select("id, user_id, full_name, address, phone, date_of_birth, status, rejection_reason, created_at")
     .order("created_at", { ascending: false });
 
   // Fetch emails separately
