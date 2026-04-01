@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { approveWithdrawal, completeWithdrawal, rejectWithdrawal } from "./actions";
@@ -14,6 +14,8 @@ export function WithdrawalActions({
 }) {
   const [showReject, setShowReject] = useState(false);
   const [reason, setReason] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   if (status === "completed") {
     return <span className="text-sm text-muted-foreground">振込完了</span>;
@@ -30,15 +32,24 @@ export function WithdrawalActions({
           <>
             <Button
               size="sm"
-              onClick={async () => {
-                await approveWithdrawal(withdrawalId);
+              disabled={isPending}
+              onClick={() => {
+                setError(null);
+                startTransition(async () => {
+                  try {
+                    await approveWithdrawal(withdrawalId);
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : "承認に失敗しました");
+                  }
+                });
               }}
             >
-              承認
+              {isPending ? "処理中..." : "承認"}
             </Button>
             <Button
               size="sm"
               variant="destructive"
+              disabled={isPending}
               onClick={() => setShowReject(!showReject)}
             >
               却下
@@ -48,11 +59,19 @@ export function WithdrawalActions({
         {status === "approved" && (
           <Button
             size="sm"
-            onClick={async () => {
-              await completeWithdrawal(withdrawalId);
+            disabled={isPending}
+            onClick={() => {
+              setError(null);
+              startTransition(async () => {
+                try {
+                  await completeWithdrawal(withdrawalId);
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "処理に失敗しました");
+                }
+              });
             }}
           >
-            振込完了
+            {isPending ? "処理中..." : "振込完了"}
           </Button>
         )}
       </div>
@@ -68,18 +87,27 @@ export function WithdrawalActions({
           <Button
             size="sm"
             variant="destructive"
-            disabled={!reason.trim()}
+            disabled={!reason.trim() || isPending}
             className="w-full sm:w-auto"
-            onClick={async () => {
-              await rejectWithdrawal(withdrawalId, reason);
-              setShowReject(false);
-              setReason("");
+            onClick={() => {
+              setError(null);
+              startTransition(async () => {
+                try {
+                  await rejectWithdrawal(withdrawalId, reason);
+                  setShowReject(false);
+                  setReason("");
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "却下に失敗しました");
+                }
+              });
             }}
           >
-            送信
+            {isPending ? "処理中..." : "送信"}
           </Button>
         </div>
       )}
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );
 }
