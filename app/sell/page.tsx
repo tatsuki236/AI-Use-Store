@@ -143,22 +143,12 @@ export default async function SellDashboardPage() {
                 </div>
                 {/* Actions */}
                 <div className="flex gap-2 flex-shrink-0">
-                  {(article.status === "draft" ||
-                    article.status === "rejected") && (
+                  {article.status !== "pending_review" && (
                     <Link href={`/sell/${article.id}/edit`}>
                       <Button size="sm" variant="outline" className="w-full sm:w-auto">
                         編集
                       </Button>
                     </Link>
-                  )}
-                  {article.status === "published" && (
-                    <>
-                      <Link href={`/sell/${article.id}/metadata`}>
-                        <Button size="sm" variant="outline" className="w-full sm:w-auto">
-                          設定変更
-                        </Button>
-                      </Link>
-                    </>
                   )}
                 </div>
               </div>

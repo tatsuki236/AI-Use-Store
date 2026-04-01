@@ -26,13 +26,13 @@ export default async function SellEditPage({
 
   if (!article) notFound();
 
-  if (article.status !== "draft" && article.status !== "rejected") {
+  if (article.status === "pending_review") {
     redirect("/sell");
   }
 
   const action = updateUserArticle.bind(null, article.id);
 
-  const rejectionNotice =
+  const notice =
     article.status === "rejected" && article.rejection_reason ? (
       <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
         <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100 mb-2">
@@ -42,13 +42,22 @@ export default async function SellEditPage({
           却下理由: {article.rejection_reason}
         </p>
       </div>
+    ) : article.status === "published" ? (
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+        <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 mb-2">
+          公開中
+        </Badge>
+        <p className="text-sm text-amber-700">
+          この記事は現在公開中です。編集して再提出すると再審査となり、承認されるまで非公開になります。
+        </p>
+      </div>
     ) : undefined;
 
   return (
     <ArticleEditor
       formAction={action}
       article={article}
-      rejectionNotice={rejectionNotice}
+      rejectionNotice={notice}
     />
   );
 }

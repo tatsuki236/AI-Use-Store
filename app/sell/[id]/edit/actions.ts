@@ -22,8 +22,8 @@ async function requireArticleOwner(articleId: string) {
     throw new Error("この記事を編集する権限がありません");
   }
 
-  if (article.status !== "draft" && article.status !== "rejected") {
-    throw new Error("この記事は編集できません");
+  if (article.status === "pending_review") {
+    throw new Error("審査中の記事は編集できません");
   }
 
   const { data: profile } = await supabase
@@ -63,6 +63,7 @@ export async function updateUserArticle(articleId: string, formData: FormData) {
       is_free,
       thumbnail_url,
       status,
+      published: false,
       rejection_reason: null,
       updated_at: new Date().toISOString(),
       category,
