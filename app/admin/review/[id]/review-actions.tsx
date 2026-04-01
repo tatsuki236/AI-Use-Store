@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { approveArticle, rejectArticle } from "../actions";
@@ -14,6 +14,8 @@ export function ReviewActions({
 }) {
   const [showReject, setShowReject] = useState(false);
   const [reason, setReason] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   if (status !== "pending_review") {
     return (
@@ -28,15 +30,24 @@ export function ReviewActions({
       <div className="flex flex-wrap gap-3">
         <Button
           className="w-full sm:w-auto"
-          onClick={async () => {
-            await approveArticle(articleId);
+          disabled={isPending}
+          onClick={() => {
+            setError(null);
+            startTransition(async () => {
+              try {
+                await approveArticle(articleId);
+              } catch (e) {
+                setError(e instanceof Error ? e.message : "承認に失敗しました");
+              }
+            });
           }}
         >
-          承認して公開する
+          {isPending ? "処理中..." : "承認して公開する"}
         </Button>
         <Button
           variant="destructive"
           className="w-full sm:w-auto"
+          disabled={isPending}
           onClick={() => setShowReject(!showReject)}
         >
           却下する
@@ -53,16 +64,25 @@ export function ReviewActions({
           />
           <Button
             variant="destructive"
-            disabled={!reason.trim()}
+            disabled={!reason.trim() || isPending}
             className="w-full sm:w-auto"
-            onClick={async () => {
-              await rejectArticle(articleId, reason);
+            onClick={() => {
+              setError(null);
+              startTransition(async () => {
+                try {
+                  await rejectArticle(articleId, reason);
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "却下に失敗しました");
+                }
+              });
             }}
           >
-            却下を確定
+            {isPending ? "処理中..." : "却下を確定"}
           </Button>
         </div>
       )}
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );
 }
