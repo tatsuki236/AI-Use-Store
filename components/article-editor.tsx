@@ -413,17 +413,17 @@ export function ArticleEditor({
                   type="button"
                   onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
                   className={`toolbar-btn ${editor.isActive("heading", { level: 2 }) ? "is-active" : ""}`}
-                  title="見出し2"
+                  title="大見出し"
                 >
-                  H2
+                  大見出し
                 </button>
                 <button
                   type="button"
                   onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
                   className={`toolbar-btn ${editor.isActive("heading", { level: 3 }) ? "is-active" : ""}`}
-                  title="見出し3"
+                  title="見出し"
                 >
-                  H3
+                  見出し
                 </button>
 
                 <span className="toolbar-sep" />
