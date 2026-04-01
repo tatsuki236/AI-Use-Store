@@ -44,7 +44,7 @@ export async function approveSeller(
 
     if (error) return { success: false, error: "承認に失敗しました: " + error.message };
 
-    // Send approval email
+    // Send approval email (fire-and-forget)
     if (seller) {
       const { data: profile } = await supabase
         .from("profiles")
@@ -53,11 +53,9 @@ export async function approveSeller(
         .single();
 
       if (profile?.email) {
-        try {
-          await sendSellerApprovedEmail(profile.email, seller.full_name);
-        } catch (e) {
-          console.error("Failed to send approval email:", e);
-        }
+        sendSellerApprovedEmail(profile.email, seller.full_name).catch((e) =>
+          console.error("Failed to send approval email:", e)
+        );
       }
     }
 
@@ -96,7 +94,7 @@ export async function rejectSeller(
 
     if (error) return { success: false, error: "却下に失敗しました: " + error.message };
 
-    // Send rejection email
+    // Send rejection email (fire-and-forget)
     if (seller) {
       const { data: profile } = await supabase
         .from("profiles")
@@ -105,11 +103,9 @@ export async function rejectSeller(
         .single();
 
       if (profile?.email) {
-        try {
-          await sendSellerRejectedEmail(profile.email, seller.full_name, reason);
-        } catch (e) {
-          console.error("Failed to send rejection email:", e);
-        }
+        sendSellerRejectedEmail(profile.email, seller.full_name, reason).catch(
+          (e) => console.error("Failed to send rejection email:", e)
+        );
       }
     }
 
