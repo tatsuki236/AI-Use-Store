@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { approveWithdrawal, completeWithdrawal, rejectWithdrawal } from "./actions";
@@ -16,6 +17,7 @@ export function WithdrawalActions({
   const [reason, setReason] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   if (status === "completed") {
     return <span className="text-sm text-muted-foreground">振込完了</span>;
@@ -38,6 +40,7 @@ export function WithdrawalActions({
                 startTransition(async () => {
                   try {
                     await approveWithdrawal(withdrawalId);
+                    router.refresh();
                   } catch (e) {
                     setError(e instanceof Error ? e.message : "承認に失敗しました");
                   }
@@ -65,6 +68,7 @@ export function WithdrawalActions({
               startTransition(async () => {
                 try {
                   await completeWithdrawal(withdrawalId);
+                  router.refresh();
                 } catch (e) {
                   setError(e instanceof Error ? e.message : "処理に失敗しました");
                 }
@@ -96,6 +100,7 @@ export function WithdrawalActions({
                   await rejectWithdrawal(withdrawalId, reason);
                   setShowReject(false);
                   setReason("");
+                  router.refresh();
                 } catch (e) {
                   setError(e instanceof Error ? e.message : "却下に失敗しました");
                 }

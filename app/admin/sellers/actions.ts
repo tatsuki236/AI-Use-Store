@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
 import { sendSellerApprovedEmail, sendSellerRejectedEmail } from "@/lib/email";
 
 async function requireAdmin() {
@@ -52,8 +51,6 @@ export async function approveSeller(sellerId: string) {
       }
     }
   }
-
-  revalidatePath("/admin/sellers");
 }
 
 export async function rejectSeller(sellerId: string, reason: string) {
@@ -93,6 +90,4 @@ export async function rejectSeller(sellerId: string, reason: string) {
       }
     }
   }
-
-  revalidatePath("/admin/sellers");
 }

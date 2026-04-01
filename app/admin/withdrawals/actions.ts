@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -31,8 +30,6 @@ export async function approveWithdrawal(withdrawalId: string) {
     .eq("id", withdrawalId);
 
   if (error) throw new Error("承認に失敗しました: " + error.message);
-
-  revalidatePath("/admin/withdrawals");
 }
 
 export async function completeWithdrawal(withdrawalId: string) {
@@ -47,8 +44,6 @@ export async function completeWithdrawal(withdrawalId: string) {
     .eq("id", withdrawalId);
 
   if (error) throw new Error("完了処理に失敗しました: " + error.message);
-
-  revalidatePath("/admin/withdrawals");
 }
 
 export async function rejectWithdrawal(withdrawalId: string, reason: string) {
@@ -64,6 +59,4 @@ export async function rejectWithdrawal(withdrawalId: string, reason: string) {
     .eq("id", withdrawalId);
 
   if (error) throw new Error("却下に失敗しました: " + error.message);
-
-  revalidatePath("/admin/withdrawals");
 }
