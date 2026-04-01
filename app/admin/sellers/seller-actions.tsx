@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { approveSeller, rejectSeller } from "./actions";
@@ -19,13 +19,37 @@ export function SellerActions({ seller }: { seller: Seller }) {
   const [showReject, setShowReject] = useState(false);
   const [reason, setReason] = useState("");
   const [showDetails, setShowDetails] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (seller.status === "approved") {
     return (
       <span className="text-sm text-muted-foreground">承認済み</span>
     );
+  }
+
+  async function handleApprove() {
+    setError(null);
+    setLoading(true);
+    const result = await approveSeller(seller.id);
+    if (result.success) {
+      window.location.reload();
+    } else {
+      setError(result.error ?? "承認に失敗しました");
+      setLoading(false);
+    }
+  }
+
+  async function handleReject() {
+    setError(null);
+    setLoading(true);
+    const result = await rejectSeller(seller.id, reason);
+    if (result.success) {
+      window.location.reload();
+    } else {
+      setError(result.error ?? "却下に失敗しました");
+      setLoading(false);
+    }
   }
 
   return (
@@ -42,25 +66,15 @@ export function SellerActions({ seller }: { seller: Seller }) {
           <>
             <Button
               size="sm"
-              disabled={isPending}
-              onClick={() => {
-                setError(null);
-                startTransition(async () => {
-                  try {
-                    await approveSeller(seller.id);
-                    window.location.reload();
-                  } catch (e) {
-                    setError(e instanceof Error ? e.message : "承認に失敗しました");
-                  }
-                });
-              }}
+              disabled={loading}
+              onClick={handleApprove}
             >
-              {isPending ? "処理中..." : "承認"}
+              {loading ? "処理中..." : "承認"}
             </Button>
             <Button
               size="sm"
               variant="destructive"
-              disabled={isPending}
+              disabled={loading}
               onClick={() => setShowReject(!showReject)}
             >
               却下
@@ -91,21 +105,11 @@ export function SellerActions({ seller }: { seller: Seller }) {
           <Button
             size="sm"
             variant="destructive"
-            disabled={!reason.trim() || isPending}
+            disabled={!reason.trim() || loading}
             className="w-full sm:w-auto"
-            onClick={() => {
-              setError(null);
-              startTransition(async () => {
-                try {
-                  await rejectSeller(seller.id, reason);
-                  window.location.reload();
-                } catch (e) {
-                  setError(e instanceof Error ? e.message : "却下に失敗しました");
-                }
-              });
-            }}
+            onClick={handleReject}
           >
-            {isPending ? "処理中..." : "送信"}
+            {loading ? "処理中..." : "送信"}
           </Button>
         </div>
       )}
