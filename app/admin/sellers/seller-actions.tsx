@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { approveSeller, rejectSeller } from "./actions";
@@ -22,7 +21,6 @@ export function SellerActions({ seller }: { seller: Seller }) {
   const [showDetails, setShowDetails] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   if (seller.status === "approved") {
     return (
@@ -50,7 +48,7 @@ export function SellerActions({ seller }: { seller: Seller }) {
                 startTransition(async () => {
                   try {
                     await approveSeller(seller.id);
-                    router.refresh();
+                    window.location.reload();
                   } catch (e) {
                     setError(e instanceof Error ? e.message : "承認に失敗しました");
                   }
@@ -100,9 +98,7 @@ export function SellerActions({ seller }: { seller: Seller }) {
               startTransition(async () => {
                 try {
                   await rejectSeller(seller.id, reason);
-                  setShowReject(false);
-                  setReason("");
-                  router.refresh();
+                  window.location.reload();
                 } catch (e) {
                   setError(e instanceof Error ? e.message : "却下に失敗しました");
                 }

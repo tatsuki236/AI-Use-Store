@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { approveArticle, rejectArticle } from "../actions";
@@ -17,7 +16,6 @@ export function ReviewActions({
   const [reason, setReason] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   if (status !== "pending_review") {
     return (
@@ -38,7 +36,7 @@ export function ReviewActions({
             startTransition(async () => {
               try {
                 await approveArticle(articleId);
-                router.push("/admin/review");
+                window.location.href = "/admin/review";
               } catch (e) {
                 setError(e instanceof Error ? e.message : "承認に失敗しました");
               }
@@ -74,7 +72,7 @@ export function ReviewActions({
               startTransition(async () => {
                 try {
                   await rejectArticle(articleId, reason);
-                  router.push("/admin/review");
+                  window.location.href = "/admin/review";
                 } catch (e) {
                   setError(e instanceof Error ? e.message : "却下に失敗しました");
                 }
