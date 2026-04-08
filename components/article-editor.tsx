@@ -16,6 +16,7 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { Node, mergeAttributes, type Editor } from "@tiptap/core";
+import { DOMParser as PmDOMParser } from "@tiptap/pm/model";
 import { marked } from "marked";
 
 // Extend commands interface for PaywallDivider
@@ -232,6 +233,49 @@ export function ArticleEditor({
     editorProps: {
       attributes: {
         class: "article-content editor-area outline-none",
+      },
+      handlePaste: (view, event) => {
+        const clipboardData = event.clipboardData;
+        if (!clipboardData) return false;
+
+        const html = clipboardData.getData("text/html");
+        const text = clipboardData.getData("text/plain");
+
+        // If HTML contains a table, let Tiptap handle it natively
+        if (html && /<table\b/i.test(html)) {
+          return false;
+        }
+
+        // Detect CSV/TSV-like plain text (rows with commas or tabs, 2+ columns)
+        if (text) {
+          const lines = text.trim().split(/\r?\n/).filter((l) => l.trim());
+          if (lines.length >= 2) {
+            const sep = lines[0].includes("\t") ? "\t" : lines[0].includes(",") ? "," : null;
+            if (sep) {
+              const rows = lines.map((line) => line.split(sep).map((c) => c.trim()));
+              const colCount = rows[0].length;
+              if (colCount >= 2 && rows.every((r) => r.length === colCount)) {
+                event.preventDefault();
+                const headerCells = rows[0].map((c) => `<th>${c}</th>`).join("");
+                const bodyRows = rows
+                  .slice(1)
+                  .map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`)
+                  .join("");
+                const tableHtml = `<table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+
+                // Parse HTML and insert via ProseMirror
+                const wrapper = document.createElement("div");
+                wrapper.innerHTML = tableHtml;
+                const slice = PmDOMParser.fromSchema(view.state.schema).parseSlice(wrapper);
+                const tr = view.state.tr.replaceSelection(slice);
+                view.dispatch(tr);
+                return true;
+              }
+            }
+          }
+        }
+
+        return false;
       },
     },
   });
