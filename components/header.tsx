@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
@@ -15,25 +16,25 @@ export async function Header() {
   let avatarUrl: string | null = null;
   let cartCount = 0;
   if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, avatar_url")
-      .eq("id", user.id)
-      .single();
+    const [{ data: profile }, { data: seller }, { count }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("role, avatar_url")
+        .eq("id", user.id)
+        .single(),
+      supabase
+        .from("seller_profiles")
+        .select("status")
+        .eq("user_id", user.id)
+        .single(),
+      supabase
+        .from("purchases")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id),
+    ]);
     isAdmin = profile?.role === "admin";
     avatarUrl = profile?.avatar_url ?? null;
-
-    const { data: seller } = await supabase
-      .from("seller_profiles")
-      .select("status")
-      .eq("user_id", user.id)
-      .single();
     sellerStatus = seller?.status ?? null;
-
-    const { count } = await supabase
-      .from("purchases")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id);
     cartCount = count ?? 0;
   }
 
@@ -43,7 +44,7 @@ export async function Header() {
       <div className="hidden sm:flex container mx-auto items-center h-16 px-4 gap-4">
         {/* Left: Logo */}
         <Link href="/" className="flex items-center flex-shrink-0">
-          <img src="/images/logo-header.png" alt="AI USE STORE" className="h-12 w-auto object-contain" />
+          <Image src="/images/logo-header.png" alt="AI USE STORE" width={160} height={48} priority className="h-12 w-auto object-contain" />
         </Link>
 
         {/* Center: Search */}
@@ -122,9 +123,11 @@ export async function Header() {
               {/* アカウント */}
               <Link href="/account">
                 {avatarUrl ? (
-                  <img
+                  <Image
                     src={avatarUrl}
                     alt="アバター"
+                    width={32}
+                    height={32}
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 ) : (
@@ -222,7 +225,7 @@ export async function Header() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center flex-1 min-w-0">
-            <img src="/images/logo-header.png" alt="AI USE STORE" className="h-10 w-auto object-contain" />
+            <Image src="/images/logo-header.png" alt="AI USE STORE" width={133} height={40} priority className="h-10 w-auto object-contain" />
           </Link>
 
           {user ? (
@@ -260,9 +263,11 @@ export async function Header() {
               {/* Avatar → マイページ */}
               <Link href="/account" className="flex-shrink-0">
                 {avatarUrl ? (
-                  <img
+                  <Image
                     src={avatarUrl}
                     alt="アバター"
+                    width={32}
+                    height={32}
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 ) : (

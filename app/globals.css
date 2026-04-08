@@ -467,3 +467,44 @@ div[data-youtube-video] iframe {
   margin: 0 0.25rem;
   vertical-align: middle;
 }
+
+/* Tiptap Table Editor Styles */
+.editor-area table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+  table-layout: fixed;
+  overflow: hidden;
+}
+
+.editor-area th,
+.editor-area td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+  position: relative;
+  min-width: 80px;
+}
+
+.editor-area th {
+  background: var(--muted);
+  font-weight: 600;
+}
+
+.editor-area td > *,
+.editor-area th > * {
+  margin-bottom: 0;
+}
+
+/* Selected cell highlight */
+.editor-area .selectedCell {
+  background: oklch(0.93 0.05 250);
+}
+
+.editor-area .selectedCell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 2px solid var(--primary);
+}

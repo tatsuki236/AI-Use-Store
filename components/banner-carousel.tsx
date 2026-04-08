@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 type Banner = {
@@ -14,10 +15,12 @@ type Banner = {
 function BannerContent({ banner }: { banner: Banner }) {
   return (
     <>
-      <img
+      <Image
         src={banner.image_url}
         alt={banner.title}
-        className="w-full h-full object-cover"
+        fill
+        sizes="(max-width: 640px) 100vw, 1152px"
+        className="object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
       <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 text-white">

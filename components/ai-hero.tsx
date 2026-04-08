@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 type HeroStats = {
@@ -24,12 +25,14 @@ const accentShadow = {
 
 export function AiHero({ heroStats, isLoggedIn }: { heroStats: HeroStats; isLoggedIn?: boolean }) {
   return (
-    <section className="relative overflow-hidden flex items-center bg-black" style={{ aspectRatio: "2 / 1" }}>
+    <section className="relative overflow-hidden flex items-center bg-black sm:aspect-[2/1]">
       {/* Background image — 上寄せで下部を少しクロップ */}
-      <img
+      <Image
         className="absolute inset-0 z-0 w-full h-full object-cover object-top"
-        src="/images/Gemini_Generated_Image_m91bvxm91bvxm91b.png"
+        src="/images/hero-bg.webp"
         alt=""
+        fill
+        priority
         aria-hidden="true"
       />
 

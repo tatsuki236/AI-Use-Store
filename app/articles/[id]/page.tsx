@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -162,68 +163,79 @@ export default async function ArticlePage({
 
   if (!article) notFound();
 
-  // Fetch author profile separately (author_id references auth.users, not profiles directly)
-  const { data: authorProfile } = await supabase
-    .from("profiles")
-    .select("display_name, email, avatar_url")
-    .eq("id", article.author_id)
-    .single();
+  // Fetch author profile and user in parallel
+  const [{ data: authorProfile }, { data: { user } }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("display_name, email, avatar_url")
+      .eq("id", article.author_id)
+      .single(),
+    supabase.auth.getUser(),
+  ]);
 
   const authorName = authorProfile?.display_name || authorProfile?.email?.split("@")[0] || "ユーザー";
   const authorInitial = authorName.charAt(0).toUpperCase();
 
-  // Check user login and purchase status
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  // Fetch reviews + user-specific data in parallel
   let purchaseStatus: string | null = null;
-  if (user && !article.is_free) {
-    const { data: purchase } = await supabase
-      .from("purchases")
-      .select("status")
-      .eq("user_id", user.id)
+  let hasLiked = false;
+  let hasBookmarked = false;
+
+  const parallelQueries: PromiseLike<any>[] = [
+    supabase
+      .from("reviews")
+      .select("id, user_id, rating, comment, created_at")
       .eq("article_id", id)
-      .single();
-    purchaseStatus = purchase?.status ?? null;
+      .order("created_at", { ascending: false }),
+  ];
+
+  if (user) {
+    if (!article.is_free) {
+      parallelQueries.push(
+        supabase
+          .from("purchases")
+          .select("status")
+          .eq("user_id", user.id)
+          .eq("article_id", id)
+          .single()
+      );
+    }
+    parallelQueries.push(
+      supabase
+        .from("likes")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("article_id", id)
+        .single(),
+      supabase
+        .from("bookmarks")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("article_id", id)
+        .single()
+    );
+  }
+
+  const results = await Promise.all(parallelQueries);
+  const reviews = results[0]?.data ?? [];
+
+  if (user) {
+    let idx = 1;
+    if (!article.is_free) {
+      purchaseStatus = results[idx]?.data?.status ?? null;
+      idx++;
+    }
+    hasLiked = !!results[idx]?.data;
+    hasBookmarked = !!results[idx + 1]?.data;
   }
 
   const isFree = article.is_free;
   const hasAccess = isFree || purchaseStatus === "completed";
   const isPending = purchaseStatus === "pending";
 
-  // Fetch reviews for this article
-  const { data: reviews } = await supabase
-    .from("reviews")
-    .select("id, user_id, rating, comment, created_at")
-    .eq("article_id", id)
-    .order("created_at", { ascending: false });
-
-  // Check if current user already reviewed
   const existingReview = user
-    ? (reviews ?? []).find((r) => r.user_id === user.id) ?? null
+    ? reviews.find((r: any) => r.user_id === user.id) ?? null
     : null;
-
-  // Check if current user has liked
-  let hasLiked = false;
-  let hasBookmarked = false;
-  if (user) {
-    const { data: like } = await supabase
-      .from("likes")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("article_id", id)
-      .single();
-    hasLiked = !!like;
-
-    const { data: bookmark } = await supabase
-      .from("bookmarks")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("article_id", id)
-      .single();
-    hasBookmarked = !!bookmark;
-  }
 
   const charCount = getCharCount(article.content);
 
@@ -237,18 +249,25 @@ export default async function ArticlePage({
       {/* Hero Image */}
       {article.thumbnail_url ? (
         <div className="container mx-auto max-w-3xl px-4 pt-6">
-          <img
-            src={article.thumbnail_url}
-            alt=""
-            className="w-full max-h-[300px] object-contain rounded-2xl"
-          />
+          <div className="relative w-full max-h-[300px] aspect-[16/9]">
+            <Image
+              src={article.thumbnail_url}
+              alt=""
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 768px"
+              className="object-contain rounded-2xl"
+            />
+          </div>
         </div>
       ) : (
         <div className="container mx-auto max-w-3xl px-4 pt-6">
           <div className="h-48 sm:h-56 bg-white rounded-2xl flex items-center justify-center">
-            <img
+            <Image
               src="/images/logo.png"
               alt="AI USE STORE"
+              width={400}
+              height={400}
               className="w-1/2 max-h-[60%] object-contain opacity-80"
             />
           </div>
@@ -295,19 +314,23 @@ export default async function ArticlePage({
               />
             </div>
             <div className="mt-4 flex items-center gap-3 text-sm text-muted-foreground">
-              {authorProfile?.avatar_url ? (
-                <img
-                  src={authorProfile.avatar_url}
-                  alt=""
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                  {authorInitial}
-                </div>
-              )}
-              <div>
+              <Link href={`/author/${article.author_id}`} className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+                {authorProfile?.avatar_url ? (
+                  <Image
+                    src={authorProfile.avatar_url}
+                    alt=""
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                    {authorInitial}
+                  </div>
+                )}
                 <p className="text-foreground text-sm font-medium">{authorName}</p>
+              </Link>
+              <div>
                 <div className="flex items-center gap-2 text-xs">
                   <time>
                     {new Date(article.created_at).toLocaleDateString("ja-JP", {

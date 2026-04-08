@@ -67,5 +67,5 @@ export async function createUserArticle(formData: FormData) {
   if (error) throw new Error("記事の作成に失敗しました: " + error.message);
 
   revalidatePath("/sell");
-  redirect("/sell");
+  redirect(status === "pending_review" ? "/sell?submitted=true" : "/sell");
 }

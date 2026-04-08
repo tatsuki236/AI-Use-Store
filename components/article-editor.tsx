@@ -11,6 +11,10 @@ import LinkExtension from "@tiptap/extension-link";
 import ImageExtension from "@tiptap/extension-image";
 import Youtube from "@tiptap/extension-youtube";
 import Placeholder from "@tiptap/extension-placeholder";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { TableCell } from "@tiptap/extension-table-cell";
 import { Node, mergeAttributes, type Editor } from "@tiptap/core";
 import { marked } from "marked";
 
@@ -106,6 +110,7 @@ function convertMarkdownToHtml(markdown: string): string {
 }
 
 const TEXT_COLORS = [
+  { label: "黒", value: "#000000", bg: "bg-black" },
   { label: "赤", value: "#ef4444", bg: "bg-red-500" },
   { label: "青", value: "#3b82f6", bg: "bg-blue-500" },
   { label: "緑", value: "#22c55e", bg: "bg-green-500" },
@@ -178,6 +183,7 @@ export function ArticleEditor({
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [slug, setSlug] = useState(article?.slug ?? "");
   const [uploading, setUploading] = useState(false);
+  const [tableMenuOpen, setTableMenuOpen] = useState(false);
 
   // Prepare initial content
   const initialContent = article?.content
@@ -210,6 +216,13 @@ export function ArticleEditor({
       Placeholder.configure({
         placeholder: "ここに本文を書く...",
       }),
+      Table.configure({
+        resizable: false,
+        HTMLAttributes: { class: "editor-table" },
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
       PaywallDivider,
     ],
     content: initialContent,
@@ -543,6 +556,16 @@ export function ArticleEditor({
                   ―
                 </button>
 
+                {/* Table */}
+                <button
+                  type="button"
+                  onClick={() => setTableMenuOpen(!tableMenuOpen)}
+                  className={`toolbar-btn ${editor.isActive("table") ? "is-active" : ""}`}
+                  title="表"
+                >
+                  表
+                </button>
+
                 {/* Paywall */}
                 <div className="ml-auto">
                   <button
@@ -617,6 +640,86 @@ export function ArticleEditor({
                       className="mt-2 text-xs text-muted-foreground hover:text-foreground"
                     >
                       キャンセル
+                    </button>
+                  </div>
+                )}
+
+                {/* Table menu */}
+                {tableMenuOpen && (
+                  <div className="absolute top-full left-0 right-0 bg-white border border-border rounded-lg shadow-lg mt-1 p-3 z-50">
+                    <p className="text-xs text-muted-foreground mb-2">表の操作</p>
+                    <div className="flex flex-wrap gap-1">
+                      {!editor.isActive("table") ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+                            setTableMenuOpen(false);
+                          }}
+                          className="px-2 py-1 text-xs rounded bg-muted hover:bg-primary/10 hover:text-primary transition-colors"
+                        >
+                          3×3の表を挿入
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => { editor.chain().focus().addColumnAfter().run(); setTableMenuOpen(false); }}
+                            className="px-2 py-1 text-xs rounded bg-muted hover:bg-primary/10 hover:text-primary transition-colors"
+                          >
+                            列を右に追加
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { editor.chain().focus().addColumnBefore().run(); setTableMenuOpen(false); }}
+                            className="px-2 py-1 text-xs rounded bg-muted hover:bg-primary/10 hover:text-primary transition-colors"
+                          >
+                            列を左に追加
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { editor.chain().focus().deleteColumn().run(); setTableMenuOpen(false); }}
+                            className="px-2 py-1 text-xs rounded bg-red-50 hover:bg-red-100 text-red-600 transition-colors"
+                          >
+                            列を削除
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { editor.chain().focus().addRowAfter().run(); setTableMenuOpen(false); }}
+                            className="px-2 py-1 text-xs rounded bg-muted hover:bg-primary/10 hover:text-primary transition-colors"
+                          >
+                            行を下に追加
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { editor.chain().focus().addRowBefore().run(); setTableMenuOpen(false); }}
+                            className="px-2 py-1 text-xs rounded bg-muted hover:bg-primary/10 hover:text-primary transition-colors"
+                          >
+                            行を上に追加
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { editor.chain().focus().deleteRow().run(); setTableMenuOpen(false); }}
+                            className="px-2 py-1 text-xs rounded bg-red-50 hover:bg-red-100 text-red-600 transition-colors"
+                          >
+                            行を削除
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { editor.chain().focus().deleteTable().run(); setTableMenuOpen(false); }}
+                            className="px-2 py-1 text-xs rounded bg-red-50 hover:bg-red-100 text-red-600 transition-colors"
+                          >
+                            表を削除
+                          </button>
+                        </>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setTableMenuOpen(false)}
+                      className="mt-2 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      閉じる
                     </button>
                   </div>
                 )}

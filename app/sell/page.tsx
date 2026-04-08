@@ -3,37 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/header";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-
-function statusBadge(status: string) {
-  switch (status) {
-    case "draft":
-      return <Badge variant="outline">下書き</Badge>;
-    case "pending_review":
-      return (
-        <Badge
-          variant="outline"
-          className="text-yellow-600 border-yellow-600"
-        >
-          審査中
-        </Badge>
-      );
-    case "published":
-      return (
-        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
-          公開中
-        </Badge>
-      );
-    case "rejected":
-      return (
-        <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100">
-          却下
-        </Badge>
-      );
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
-}
+import { Suspense } from "react";
+import { SubmittedDialog } from "./submitted-dialog";
+import { ArticleList } from "./article-list";
 
 export default async function SellDashboardPage() {
   const supabase = await createClient();
@@ -70,6 +42,9 @@ export default async function SellDashboardPage() {
   return (
     <div className="min-h-screen bg-muted/30">
       <Header />
+      <Suspense>
+        <SubmittedDialog />
+      </Suspense>
       <main className="container mx-auto max-w-4xl px-4 py-6 sm:py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -118,42 +93,7 @@ export default async function SellDashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-3">
-            {articles.map((article) => (
-              <div
-                key={article.id}
-                className="bg-card border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3"
-              >
-                {/* Title + badges */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{article.title}</p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    {statusBadge(article.status)}
-                    {article.is_free ? (
-                      <Badge variant="secondary" className="text-xs">無料</Badge>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">
-                        ¥{article.price.toLocaleString()}
-                      </span>
-                    )}
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(article.updated_at).toLocaleDateString("ja-JP")}
-                    </span>
-                  </div>
-                </div>
-                {/* Actions */}
-                <div className="flex gap-2 flex-shrink-0">
-                  {article.status !== "pending_review" && (
-                    <Link href={`/sell/${article.id}/edit`}>
-                      <Button size="sm" variant="outline" className="w-full sm:w-auto">
-                        編集
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+          <ArticleList articles={articles} />
         )}
       </main>
     </div>

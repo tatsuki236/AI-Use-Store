@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
@@ -34,9 +35,9 @@ export default async function HomePage({
     .select("id, title, content, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count, category, slug")
     .eq("published", true);
 
-  // Category filter
+  // Category filter (supports comma-separated multiple categories)
   if (params.category) {
-    query = query.eq("category", params.category);
+    query = query.ilike("category", `%${params.category}%`);
   }
 
   // Price filter
@@ -63,44 +64,49 @@ export default async function HomePage({
     query = query.order("created_at", { ascending: false });
   }
 
-  const { data: articles } = await query;
-
-  // Trending: top by purchase_count
-  const { data: trending } = await supabase
-    .from("articles")
-    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count, slug")
-    .eq("published", true)
-    .order("purchase_count", { ascending: false })
-    .order("rating", { ascending: false })
-    .limit(8);
-
-  // New arrivals (last 14 days)
   const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
-  const { data: newArrivals } = await supabase
-    .from("articles")
-    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count, slug")
-    .eq("published", true)
-    .gte("created_at", twoWeeksAgo)
-    .order("created_at", { ascending: false })
-    .limit(8);
 
-  // Ranking (top 5 by rating)
-  const { data: ranked } = await supabase
-    .from("articles")
-    .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count, slug")
-    .eq("published", true)
-    .order("rating", { ascending: false })
-    .limit(10);
-
-  // Hero stats
-  const { data: heroStats } = await supabase.rpc("get_hero_stats");
-
-  // Banners
-  const { data: banners } = await supabase
-    .from("banners")
-    .select("id, title, description, image_url, link_url")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+  const [
+    { data: articles },
+    { data: trending },
+    { data: newArrivals },
+    { data: ranked },
+    { data: heroStats },
+    { data: banners },
+  ] = await Promise.all([
+    query,
+    // Trending: top by purchase_count
+    supabase
+      .from("articles")
+      .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count, slug")
+      .eq("published", true)
+      .order("purchase_count", { ascending: false })
+      .order("rating", { ascending: false })
+      .limit(8),
+    // New arrivals (last 14 days)
+    supabase
+      .from("articles")
+      .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count, slug")
+      .eq("published", true)
+      .gte("created_at", twoWeeksAgo)
+      .order("created_at", { ascending: false })
+      .limit(8),
+    // Ranking (top 10 by rating)
+    supabase
+      .from("articles")
+      .select("id, title, thumbnail_url, rating, price, is_free, created_at, purchase_count, review_count, like_count, slug")
+      .eq("published", true)
+      .order("rating", { ascending: false })
+      .limit(10),
+    // Hero stats
+    supabase.rpc("get_hero_stats"),
+    // Banners
+    supabase
+      .from("banners")
+      .select("id, title, description, image_url, link_url")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+  ]);
 
   const featured = !hasFilters ? (articles?.[0] ?? null) : null;
   const gridArticles = articles ?? [];
@@ -144,12 +150,12 @@ export default async function HomePage({
                         {i + 1}
                       </span>
                       {article.thumbnail_url ? (
-                        <div className="aspect-[16/10] overflow-hidden">
-                          <img src={article.thumbnail_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div className="aspect-[16/10] overflow-hidden relative">
+                          <Image src={article.thumbnail_url} alt="" fill sizes="176px" className="object-cover group-hover:scale-105 transition-transform duration-300" />
                         </div>
                       ) : (
-                        <div className="aspect-[16/10] bg-white flex items-center justify-center p-4">
-                          <img src="/images/logo.png" alt="AiUseStore" className="max-w-full max-h-full object-contain" />
+                        <div className="aspect-[16/10] bg-white flex items-center justify-center p-4 relative">
+                          <Image src="/images/logo.png" alt="AiUseStore" width={120} height={120} className="max-w-full max-h-full object-contain" />
                         </div>
                       )}
                       <div className="p-3 flex-1 flex flex-col">
@@ -191,16 +197,18 @@ export default async function HomePage({
                   )}
                 </div>
                 {featured.thumbnail_url ? (
-                  <div className="aspect-[4/3] md:aspect-auto overflow-hidden">
-                    <img
+                  <div className="aspect-[4/3] md:aspect-auto overflow-hidden relative min-h-[200px]">
+                    <Image
                       src={featured.thumbnail_url}
                       alt=""
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
                 ) : (
-                  <div className="aspect-[4/3] md:aspect-auto bg-white flex items-center justify-center p-8">
-                    <img src="/images/logo.png" alt="AiUseStore" className="max-w-full max-h-full object-contain" />
+                  <div className="aspect-[4/3] md:aspect-auto bg-white flex items-center justify-center p-8 relative">
+                    <Image src="/images/logo.png" alt="AiUseStore" width={200} height={200} className="max-w-full max-h-full object-contain" />
                   </div>
                 )}
                 <div className="p-6 sm:p-8 flex flex-col justify-center">
@@ -294,7 +302,7 @@ export default async function HomePage({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="col-span-2 md:col-span-1">
               <div className="mb-3">
-                <img src="/images/logo-header.png" alt="AI USE STORE" className="h-10 w-auto object-contain" />
+                <Image src="/images/logo-header.png" alt="AI USE STORE" width={133} height={40} className="h-10 w-auto object-contain" />
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 AIスキルを、実践的な記事で学べるAI特化型ナレッジプラットフォーム。

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { StarRating } from "@/components/star-rating";
 import { getGradient, getTag, isNew, getExcerpt, getCharCount, tagColors } from "@/lib/article-utils";
@@ -18,10 +19,20 @@ export type ArticleCardData = {
   slug?: string;
 };
 
+function getTags(article: ArticleCardData): { label: string; color: string }[] {
+  if (!article.category) {
+    const tag = getTag(article.title);
+    return tag ? [tag] : [];
+  }
+  return article.category
+    .split(",")
+    .map((c) => c.trim())
+    .filter((c) => tagColors[c])
+    .map((c) => ({ label: c, color: tagColors[c] }));
+}
+
 export function ArticleCard({ article }: { article: ArticleCardData }) {
-  const tag = article.category && tagColors[article.category]
-    ? { label: article.category, color: tagColors[article.category] }
-    : getTag(article.title);
+  const tags = getTags(article);
   const isNewArticle = isNew(article.created_at);
   const isPopular = (article.purchase_count ?? 0) >= 5;
 
@@ -31,18 +42,22 @@ export function ArticleCard({ article }: { article: ArticleCardData }) {
         {/* Thumbnail */}
         <div className="relative">
           {article.thumbnail_url ? (
-            <div className="aspect-[16/10] overflow-hidden">
-              <img
+            <div className="aspect-[16/10] overflow-hidden relative">
+              <Image
                 src={article.thumbnail_url}
                 alt=""
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
               />
             </div>
           ) : (
-            <div className="aspect-[16/10] bg-white flex items-center justify-center p-4">
-              <img
+            <div className="aspect-[16/10] bg-white flex items-center justify-center p-4 relative">
+              <Image
                 src="/images/logo.png"
                 alt="AiUseStore"
+                width={200}
+                height={200}
                 className="max-w-full max-h-full object-contain"
               />
             </div>
@@ -65,10 +80,14 @@ export function ArticleCard({ article }: { article: ArticleCardData }) {
 
         {/* Info */}
         <div className="p-3 flex-1 flex flex-col">
-          {tag && (
-            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full w-fit mb-1.5 ${tag.color}`}>
-              {tag.label}
-            </span>
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1.5">
+              {tags.map((tag) => (
+                <span key={tag.label} className={`text-[10px] font-medium px-2 py-0.5 rounded-full w-fit ${tag.color}`}>
+                  {tag.label}
+                </span>
+              ))}
+            </div>
           )}
           <h3 className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
             {article.title}

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { isInAppBrowser } from "@/lib/detect-inapp-browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -135,7 +136,7 @@ export default function SignupPage() {
         <div className="relative flex flex-col justify-center px-12 xl:px-16">
           {/* Logo */}
           <Link href="/" className="flex items-center mb-10">
-            <img src="/images/logo-header.png" alt="AI USE STORE" className="h-10 w-auto object-contain" />
+            <Image src="/images/logo-header.png" alt="AI USE STORE" width={160} height={40} className="h-10 w-auto object-contain" />
           </Link>
 
           <h1 className="text-3xl font-extrabold tracking-tight leading-tight">
@@ -168,7 +169,7 @@ export default function SignupPage() {
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <Link href="/" className="inline-flex items-center">
-              <img src="/images/logo-header.png" alt="AI USE STORE" className="h-10 w-auto object-contain" />
+              <Image src="/images/logo-header.png" alt="AI USE STORE" width={160} height={40} className="h-10 w-auto object-contain" />
             </Link>
           </div>
 
