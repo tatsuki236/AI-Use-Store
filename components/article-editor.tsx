@@ -453,12 +453,14 @@ export function ArticleEditor({
         <div className="mx-auto max-w-[720px] px-4 py-8">
           {rejectionNotice}
 
-          <input
+          <textarea
             name="title"
             required
             defaultValue={article?.title ?? ""}
             placeholder="タイトル"
-            className="w-full text-2xl sm:text-[2rem] font-bold border-none outline-none bg-transparent placeholder:text-muted-foreground/50 mb-6"
+            rows={1}
+            className="w-full text-2xl sm:text-[2rem] font-bold border-none outline-none bg-transparent placeholder:text-muted-foreground/50 mb-6 resize-none overflow-hidden"
+            style={{ fieldSizing: "content" } as React.CSSProperties}
           />
 
           {activeTab === "edit" ? (
